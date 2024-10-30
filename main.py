@@ -385,7 +385,7 @@ class ScreenMain(MDScreen):
             if(count_starting <= 0):
                 screen_wtm.ids.lb_test_subtitle.text = "HASIL PENGUKURAN"
                 screen_wtm.ids.lb_window_tint.text = str(np.round(dt_wtm_value, 2))
-                screen_wtm.ids.lb_info.text = "Ambang Batas Tingkat Meneruskan Cahaya pada Kaca Kendaraan Anda adalah 70%"
+                screen_wtm.ids.lb_info.text = "Ambang Batas Tingkat Meneruskan Cahaya pada Kaca Kendaraan adalah 70%"
                 screen_slm.ids.lb_test_subtitle.text = "HASIL PENGUKURAN"
                 screen_slm.ids.lb_sound.text = str(np.round(dt_slm_value, 2))
                 screen_slm.ids.lb_info.text = "Ambang Batas Kebisingan adalah 83 dB hingga 118 dB"

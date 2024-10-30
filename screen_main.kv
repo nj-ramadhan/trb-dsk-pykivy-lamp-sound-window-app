@@ -35,7 +35,7 @@
 
 				MDLabel:
 					id: subtitle            
-					text: "WINDOW TINT METER / WTM"
+					text: "HEAD LIGHT, SOUND LEVEL & WINDOW TINT METER"
 					halign: "left"
 					valign: "middle"
 					font_style: 'H5'
@@ -219,18 +219,21 @@
 							font_style: 'H6'
 
 					MDRectangleFlatIconButton:
-						id: bt_start_wtm
+						id: bt_start_hlm
+						size_hint_x: 1
 						icon: "play"
-						text: "MULAI WINDOW TEST"
+						text: "MULAI HEADLAMP TEST"
 						halign: "center"
 						theme_text_color: "Custom"
 						text_color: "#EEEEEE"
 						md_bg_color: "#19A56B"							
-						disabled: True
-						on_press: root.exec_start_wtm()
+						disabled: False
+						on_press: root.exec_start_hlm()
+
 
 					MDRectangleFlatIconButton:
 						id: bt_start_slm
+						size_hint_x: 1
 						icon: "play"
 						text: "MULAI SOUND TEST"
 						halign: "center"
@@ -241,15 +244,16 @@
 						on_press: root.exec_start_slm()
 
 					MDRectangleFlatIconButton:
-						id: bt_start_hlm
+						id: bt_start_wtm
+						size_hint_x: 1
 						icon: "play"
-						text: "MULAI HEADLAMP TEST"
+						text: "MULAI WINDOW TEST"
 						halign: "center"
 						theme_text_color: "Custom"
 						text_color: "#EEEEEE"
 						md_bg_color: "#19A56B"							
-						disabled: False
-						on_press: root.exec_start_hlm()
+						disabled: True
+						on_press: root.exec_start_wtm()
 
 		# footer layout
         MDBoxLayout:
