@@ -5,6 +5,7 @@
 #:include screen_main.kv
 #:include screen_wtm.kv
 #:include screen_slm.kv
+#:include screen_hlm.kv
 
 # ScreenManager:
 <RootScreen>:
@@ -29,4 +30,9 @@
     ScreenSLM:
         id: screen_slm
         name: 'screen_slm'
+        screen_manager: screen_manager
+
+    ScreenHLM:
+        id: screen_hlm
+        name: 'screen_hlm'
         screen_manager: screen_manager
