@@ -22,6 +22,10 @@ import serial.tools.list_ports as ports
 import hashlib
 import serial
 
+from HLM import ScreenHLM
+from SLM import ScreenSLM
+from WTM import ScreenWTM
+
 colors = {
     "Red": {
         "A200": "#FF2A2A",
@@ -93,12 +97,12 @@ RECORD_SECONDS = 0.8
 WIDTH = 2
 
 db_slm_value = np.array([0.0])
-dt_slm_value = 0
+dt_slm_value = 0.0
 dt_slm_flag = 0
 dt_slm_user = 1
 dt_slm_post = str(time.strftime("%Y/%m/%d %H:%M:%S", time.localtime()))
 db_hlm_value = 0
-dt_hlm_value = 0
+dt_hlm_value = 0.0
 dt_hlm_flag = 0
 dt_hlm_user = 1
 dt_slm_post = str(time.strftime("%Y/%m/%d %H:%M:%S", time.localtime()))
@@ -130,10 +134,10 @@ class ScreenLogin(MDScreen):
         global dt_wtm_user, dt_user
 
         try:
-            input_username = self.ids.tx_username.text
-            input_password = self.ids.tx_password.text       
-            #input_username = "miko"
-            #input_password = "miko" 
+            #input_username = self.ids.tx_username.text
+            #input_password = self.ids.tx_password.text       
+            input_username = "miko"
+            input_password = "miko" 
             # Adding salt at the last of the password
             dataBase_password = input_password
             # Encoding the password
@@ -277,7 +281,7 @@ class ScreenMain(MDScreen):
         global dt_no_antrian, dt_no_reg, dt_no_uji, dt_nama, dt_jenis_kendaraan
         global dt_wtm_flag, dt_wtm_value, dt_wtm_user, dt_wtm_post
         global dt_slm_flag, dt_slm_value, dt_slm_user, dt_slm_post
-        global dt_hlm_flag, dt_hlm_user, dt_hlm_post
+        global dt_hlm_flag, dt_hlm_value, dt_hlm_user, dt_hlm_post
 
         try:
             start_index, end_index  = row.table.recycle_data[row.index]["range"]
@@ -288,6 +292,7 @@ class ScreenMain(MDScreen):
             dt_jenis_kendaraan      = row.table.recycle_data[start_index + 5]["text"]
             dt_wtm_flag             = row.table.recycle_data[start_index + 6]["text"]
             dt_slm_flag             = row.table.recycle_data[start_index + 7]["text"]
+            dt_hlm_value             = row.table.recycle_data[start_index + 8]["text"]
 
         except Exception as e:
             toast_msg = f'error update table: {e}'
@@ -315,6 +320,8 @@ class ScreenMain(MDScreen):
             screen_slm.ids.lb_date.text = str(time.strftime("%d/%m/%Y", time.localtime()))
             screen_hlm.ids.lb_time.text = str(time.strftime("%H:%M:%S", time.localtime()))
             screen_hlm.ids.lb_date.text = str(time.strftime("%d/%m/%Y", time.localtime()))
+
+            screen_hlm.ids.lb_hlm.text = str(dt_hlm_value)
 
             self.ids.lb_no_antrian.text = str(dt_no_antrian)
             self.ids.lb_no_reg.text = str(dt_no_reg)
@@ -348,21 +355,17 @@ class ScreenMain(MDScreen):
                 screen_wtm.ids.bt_save.disabled = False
                 screen_wtm.ids.bt_reload.md_bg_color = colors['Red']['A200']
                 screen_wtm.ids.bt_reload.disabled = False
+            else:
+                screen_wtm.ids.bt_reload.disabled = True
+                screen_wtm.ids.bt_save.disabled = True
+            if(not flag_play):
                 screen_slm.ids.bt_save.md_bg_color = colors['Green']['200']
                 screen_slm.ids.bt_save.disabled = False
                 screen_slm.ids.bt_reload.md_bg_color = colors['Red']['A200']
                 screen_slm.ids.bt_reload.disabled = False
-                screen_hlm.ids.bt_save.md_bg_color = colors['Green']['200']
-                screen_hlm.ids.bt_save.disabled = False
-                screen_hlm.ids.bt_reload.md_bg_color = colors['Red']['A200']
-                screen_hlm.ids.bt_reload.disabled = False
             else:
-                screen_wtm.ids.bt_reload.disabled = True
-                screen_wtm.ids.bt_save.disabled = True
                 screen_slm.ids.bt_reload.disabled = True
                 screen_slm.ids.bt_save.disabled = True
-                screen_hlm.ids.bt_reload.disabled = True
-                screen_hlm.ids.bt_save.disabled = True
 
 
             if(not flag_conn_stat):
@@ -403,7 +406,6 @@ class ScreenMain(MDScreen):
                 screen_slm.ids.lb_test_subtitle.text = "HASIL PENGUKURAN"
                 screen_slm.ids.lb_sound.text = str(np.round(dt_slm_value, 2))
                 screen_slm.ids.lb_info.text = "Ambang Batas Kebisingan adalah 83 dB hingga 118 dB"
-                screen_hlm.ids.lb_hlm.text = str(np.round(dt_hlm_value, 2))
                                               
             elif(count_starting > 0):
                 if(flag_play):
@@ -413,7 +415,6 @@ class ScreenMain(MDScreen):
                     screen_slm.ids.lb_test_subtitle.text = "MEMULAI PENGUKURAN"
                     screen_slm.ids.lb_sound.text = str(count_starting)
                     screen_slm.ids.lb_info.text = "Silahkan Nyalakan Klakson Kendaraan"
-                    screen_hlm.ids.lb_hlm.text = str(count_starting)
             print("@ cgd ", count_get_data)
             print("@ flag_play ", flag_play)
             print("@ dt_slm_value ", dt_slm_value)
@@ -536,10 +537,6 @@ class ScreenMain(MDScreen):
                     count_get_data -= 1
                 elif(count_get_data <= 0):
                     flag_play = False
-                    mycursor = mydb.cursor()
-                    print(dt_no_uji)
-                    mycursor.execute("SELECT hlm_value FROM hlm_data WHERE no_uji = '%s'" % dt_no_uji)
-                    dt_hlm_value, = mycursor.fetchone()
                     Clock.unschedule(self.regular_get_data_slm)
         except Exception as e:
             toast_msg = f'error get data: {e}'
@@ -607,319 +604,6 @@ class ScreenMain(MDScreen):
     def exec_logout(self):
         self.screen_manager.current = 'screen_login'
 
-class ScreenWTM(MDScreen):        
-    def __init__(self, **kwargs):
-        super(ScreenWTM, self).__init__(**kwargs)
-        Clock.schedule_once(self.delayed_init, 2)
-        #
-    def delayed_init(self, dt):
-        pass
-
-    def exec_start(self):
-        global flag_play
-        global count_starting, count_get_data
-
-        screen_main = self.screen_manager.get_screen('screen_main')
-
-        count_starting = 3
-        count_get_data = 10
-
-        if(not flag_play):
-            stream.start_stream()
-            Clock.schedule_interval(screen_main.regular_get_data_wtm, 1)
-            flag_play = True
-
-    def exec_reload(self):
-        global flag_play
-        global count_starting, count_get_data, dt_wtm_value
-
-        screen_main = self.screen_manager.get_screen('screen_main')
-
-        count_starting = 3
-        count_get_data = 10
-        dt_wtm_value = 0
-        self.ids.bt_reload.disabled = True
-        self.ids.lb_window_tint.text = "..."
-
-        if(not flag_play):
-            stream.start_stream()
-            Clock.schedule_interval(screen_main.regular_get_data_wtm, 1)
-            flag_play = True
-
-    def exec_save(self):
-        global flag_play
-        global count_starting, count_get_data
-        global mydb, db_antrian
-        global dt_no_antrian, dt_no_reg, dt_no_uji, dt_nama, dt_jenis_kendaraan
-        global dt_wtm_flag, dt_wtm_value, dt_wtm_user, dt_wtm_post
-        global printer
-
-        try:
-            self.ids.bt_save.disabled = True
-
-            mycursor = mydb.cursor()
-
-            sql = "UPDATE tb_cekident SET wtm_flag = %s, wtm_value = %s, wtm_user = %s, wtm_post = %s WHERE noantrian = %s"
-            sql_wtm_flag = (1 if dt_wtm_flag == "Lulus" else 2)
-            dt_wtm_post = str(time.strftime("%Y/%m/%d %H:%M:%S", time.localtime()))
-            print_datetime = str(time.strftime("%d %B %Y %H:%M:%S", time.localtime()))
-            sql_val = (sql_wtm_flag, dt_wtm_value, dt_wtm_user, dt_wtm_post, dt_no_antrian)
-            mycursor.execute(sql, sql_val)
-            mydb.commit()
-
-            printer.set(align="center", normal_textsize=True)
-            printer.image("assets/logo-dishub-print.png")
-            printer.ln()
-            printer.textln("HASIL UJI TINGKAT PENERUSAN CAHAYA KACA KENDARAAN")
-            printer.set(bold=True)
-            printer.textln(f"Tanggal: {print_datetime}")
-            printer.textln("=======================================")
-            printer.set(align="left", normal_textsize=True)
-            printer.textln(f"No Antrian: {dt_no_antrian}")
-            printer.text(f"No Reg: {dt_no_reg}\t")
-            printer.textln(f"No Uji: {dt_no_uji}")
-            printer.textln(f"Nama: {dt_nama}")
-            printer.textln(f"Jenis Kendaraan: {dt_jenis_kendaraan}")
-            printer.textln("  ")
-            printer.set(double_height=True, double_width=True)
-            printer.text(f"Status:\t")
-            printer.set(bold=True)
-            printer.textln(f"{dt_wtm_flag}")
-            printer.set(bold=False)
-            printer.text(f"Nilai:\t")
-            printer.set(bold=True)
-            printer.textln(f"{str(np.round(dt_wtm_value, 2))}")
-            printer.set(align="center", normal_textsize=True)     
-            printer.textln("  ")
-            printer.image("assets/logo-trb-print.png")
-            printer.cut()
-
-            self.open_screen_main()
-        
-        except Exception as e:
-            toast_msg = f'error Save Data: {e}'
-            toast(toast_msg) 
-
-    def open_screen_main(self):
-        global flag_play        
-        global count_starting, count_get_data
-
-        screen_main = self.screen_manager.get_screen('screen_main')
-
-        count_starting = 3
-        count_get_data = 10
-        flag_play = False   
-        screen_main.exec_reload_table()
-        Clock.unschedule(screen_main.regular_get_data_wtm)
-        self.screen_manager.current = 'screen_main'
-
-    def exec_logout(self):
-        self.screen_manager.current = 'screen_login'
-
-class ScreenSLM(MDScreen):        
-    def __init__(self, **kwargs):
-        super(ScreenSLM, self).__init__(**kwargs)
-        Clock.schedule_once(self.delayed_init, 2)
-        
-    def delayed_init(self, dt):
-        pass
-
-    def reset_data(self):
-        global db_slm_value, count_starting, count_get_data, dt_slm_value
-
-        count_starting = 3
-        count_get_data = 4
-        dt_slm_value = 0.0
-        db_slm_value = np.array([0.0])
-
-    def exec_start(self):
-        global flag_play
-
-        screen_main = self.screen_manager.get_screen('screen_main')
-        self.reset_data()
-
-        if(not flag_play):
-            stream.start_stream()
-            Clock.schedule_interval(screen_main.regular_get_data_slm, 1)
-            flag_play = True
-
-    def exec_reload(self):
-        global flag_play
-
-        screen_main = self.screen_manager.get_screen('screen_main')
-        self.reset_data()
-        self.ids.bt_reload.disabled = True
-
-        if(not flag_play):
-            stream.start_stream()
-            Clock.schedule_interval(screen_main.regular_get_data_slm, 1)
-            flag_play = True
-
-    def exec_save(self):
-        global flag_play
-        global count_starting, count_get_data
-        global mydb, db_antrian
-        global dt_no_antrian, dt_no_reg, dt_no_uji, dt_nama, dt_jenis_kendaraan
-        global dt_slm_flag, dt_slm_value, dt_slm_user, dt_slm_post
-        global printer
-
-        try:
-
-            self.ids.bt_save.disabled = True
-
-            mycursor = mydb.cursor()
-
-            sql = "UPDATE tb_cekident SET slm_flag = %s, slm_value = %s, slm_user = %s, slm_post = %s WHERE noantrian = %s"
-            sql_slm_flag = (1 if dt_slm_flag == "Lulus" else 2)
-            dt_slm_post = str(time.strftime("%Y/%m/%d %H:%M:%S", time.localtime()))
-            print_datetime = str(time.strftime("%d %B %Y %H:%M:%S", time.localtime()))
-            sql_val = (sql_slm_flag, float(dt_slm_value), dt_slm_user, dt_slm_post, dt_no_antrian)
-            mycursor.execute(sql, sql_val)
-            mydb.commit()
-
-            printer.set(align="center", normal_textsize=True)
-            printer.image("asset/logo-dishub-print.png")
-            printer.ln()
-            printer.textln("HASIL UJI LEVEL KEBISINGAN KLAKSON KENDARAAN")
-            printer.set(bold=True)
-            printer.textln(f"Tanggal: {print_datetime}")
-            printer.textln("=======================================")
-            printer.set(align="left", normal_textsize=True)
-            printer.textln(f"No Antrian: {dt_no_antrian}")
-            printer.text(f"No Reg: {dt_no_reg}\t")
-            printer.textln(f"No Uji: {dt_no_uji}")
-            printer.textln(f"Nama: {dt_nama}")
-            printer.textln(f"Jenis Kendaraan: {dt_jenis_kendaraan}")
-            printer.textln("  ")
-            printer.set(double_height=True, double_width=True)
-            printer.text(f"Status:\t")
-            printer.set(bold=True)
-            printer.textln(f"{dt_slm_flag}")
-            printer.set(bold=False)
-            printer.text(f"Nilai:\t")
-            printer.set(bold=True)
-            printer.textln(f"{str(np.round(dt_slm_value, 2))}")
-            printer.set(align="center", normal_textsize=True)     
-            printer.textln("  ")
-            printer.image("asset/logo-trb-print.png")
-            printer.cut()
-
-            self.open_screen_main()
-
-        except Exception as e:
-            toast_msg = f'error Save Data: {e}'
-            toast(toast_msg) 
-
-    def open_screen_main(self):
-        global flag_play      
-
-        screen_main = self.screen_manager.get_screen('screen_main')
-        self.reset_data()
-        flag_play = False  
-        screen_main.exec_reload_table()
-        self.screen_manager.current = 'screen_main'
-
-class ScreenHLM(MDScreen):        
-    def __init__(self, **kwargs):
-        super(ScreenHLM, self).__init__(**kwargs)
-        Clock.schedule_once(self.delayed_init, 2)
-        
-    def delayed_init(self, dt):
-        pass
-
-    def reset_data(self):
-        global count_starting, count_get_data, dt_hlm_value
-
-        count_starting = 3
-        count_get_data = 4
-        dt_hlm_value = 0.0
-
-    def exec_start(self):
-        global flag_play
-        screen_main = self.screen_manager.get_screen('screen_main')
-        self.reset_data()
-        if(not flag_play):
-            #stream.start_stream()
-            #Clock.schedule_interval(screen_main.regular_get_data_slm, 1)
-            flag_play = True
-
-    def exec_reload(self):
-        global flag_play
-
-        screen_main = self.screen_manager.get_screen('screen_main')
-        self.reset_data()
-        self.ids.bt_reload.disabled = True
-
-        if(not flag_play):
-            stream.start_stream()
-            Clock.schedule_interval(screen_main.regular_get_data_hlm, 1)
-            flag_play = True
-
-    def exec_save(self):
-        global flag_play
-        global count_starting, count_get_data
-        global mydb, db_antrian
-        global dt_no_antrian, dt_no_reg, dt_no_uji, dt_nama, dt_jenis_kendaraan
-        global dt_hlm_flag, dt_hlm_value, dt_hlm_user, dt_hlm_post
-        global printer
-
-        try:
-
-            self.ids.bt_save.disabled = True
-
-            mycursor = mydb.cursor()
-
-            sql = "UPDATE tb_cekident SET hlm_flag = %s, hlm_value = %s, hlm_user = %s, hlm_post = %s WHERE noantrian = %s"
-            sql_hlm_flag = (1 if dt_hlm_flag == "Lulus" else 2)
-            dt_hlm_post = str(time.strftime("%Y/%m/%d %H:%M:%S", time.localtime()))
-            print_datetime = str(time.strftime("%d %B %Y %H:%M:%S", time.localtime()))
-            sql_val = (sql_hlm_flag, dt_hlm_value, dt_hlm_user, dt_hlm_post, dt_no_antrian)
-            mycursor.execute(sql, sql_val)
-            mydb.commit()
-
-            printer.set(align="center", normal_textsize=True)
-            printer.image("asset/logo-dishub-print.png")
-            printer.ln()
-            printer.textln("HASIL UJI LEVEL KEBISINGAN KLAKSON KENDARAAN")
-            printer.set(bold=True)
-            printer.textln(f"Tanggal: {print_datetime}")
-            printer.textln("=======================================")
-            printer.set(align="left", normal_textsize=True)
-            printer.textln(f"No Antrian: {dt_no_antrian}")
-            printer.text(f"No Reg: {dt_no_reg}\t")
-            printer.textln(f"No Uji: {dt_no_uji}")
-            printer.textln(f"Nama: {dt_nama}")
-            printer.textln(f"Jenis Kendaraan: {dt_jenis_kendaraan}")
-            printer.textln("  ")
-            printer.set(double_height=True, double_width=True)
-            printer.text(f"Status:\t")
-            printer.set(bold=True)
-            printer.textln(f"{dt_slm_flag}")
-            printer.set(bold=False)
-            printer.text(f"Nilai:\t")
-            printer.set(bold=True)
-            printer.textln(f"{str(np.round(dt_slm_value, 2))}")
-            printer.set(align="center", normal_textsize=True)     
-            printer.textln("  ")
-            printer.image("asset/logo-trb-print.png")
-            printer.cut()
-
-            self.open_screen_main()
-
-        except Exception as e:
-            toast_msg = f'error Save Data: {e}'
-            toast(toast_msg) 
-
-    def open_screen_main(self):
-        global flag_play      
-
-        screen_main = self.screen_manager.get_screen('screen_main')
-        self.reset_data()
-        flag_play = False  
-        screen_main.exec_reload_table()
-        self.screen_manager.current = 'screen_main'
-
-
 class RootScreen(ScreenManager):
     pass             
 
@@ -948,7 +632,7 @@ class SoundLevelMeterApp(MDApp):
         # Window.size = 450, 720
         # Window.allow_screensaver = True
 
-        Builder.load_file('main.kv')
+        Builder.load_file('../main.kv')
         return RootScreen()
 
 if __name__ == '__main__':
