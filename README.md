@@ -1,5 +1,5 @@
-# Window Tint Meter
- Desktop application for Window Tint Meter
+# Headlight, Sound Level & Window Tint Meter
+ Desktop application for Headlight, Sound Level & Window Tint Meter
 
 ## for Windows OS
 Install git for windows
