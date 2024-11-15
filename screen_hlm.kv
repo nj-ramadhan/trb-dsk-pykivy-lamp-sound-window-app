@@ -34,7 +34,7 @@
 
 				MDLabel:
 					id: subtitle            
-					text: "SOUND LEVEL METER / SLM"
+					text: "HEAD LIGHT METER / HLM"
 					halign: "left"
 					valign: "middle"
 					font_style: 'H5'
@@ -212,8 +212,8 @@
 						id: layout_sound
 
 						AsyncImage:
-							source: 'assets/pce-322A-display-width.png'
-							pos_hint: {'x':.0, 'y':.0}
+							source: 'assets/hlm-display.png'
+							pos_hint: {'x':.0, 'y':-0.05}
 							fit_mode: 'contain' #scale-down, fill, contain, cover
 
 						MDLabel:
@@ -222,7 +222,7 @@
 							halign: "center"
 							valign: "middle"
 							font_style: 'H6'
-							pos_hint: {'x':.0, 'y':.20}
+							pos_hint: {'x':.0, 'y':.30}
 
 						MDLabel:
 							id: lb_hlm
