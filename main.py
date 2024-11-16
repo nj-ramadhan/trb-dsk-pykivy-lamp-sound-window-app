@@ -395,33 +395,37 @@ class ScreenMain(MDScreen):
                 screen_wtm.ids.lb_comm.color = colors['Blue']['200']
                 screen_wtm.ids.lb_comm.text = 'Alat WTM Terhubung'
 
-            if(dt_hlm_value >= STANDARD_MIN_HLM):
-                screen_hlm.ids.lb_info.text = "Lampu Depan Anda Memiliki Tingkat Intensitas Cahaya Dalam Range Ambang Batas"
-            else:
-                screen_hlm.ids.lb_info.text = "Lampu Depan Anda Memiliki Tingkat Intensitas Cahaya Diluar Ambang Batas"
-            if(dt_slm_value >= STANDARD_MIN_SLM and dt_slm_value <= STANDARD_MAX_SLM):
-                screen_slm.ids.lb_info.text = "Kendaraan Anda Memiliki Tingkat Kebisingan Suara Klakson Dalam Range Ambang Batas"
-            elif(dt_slm_value < STANDARD_MIN_SLM):
-                screen_slm.ids.lb_info.text = "Kendaraan Anda Memiliki Tingkat Kebisingan Suara Klakson Dibawah Ambang Batas"
-            elif(dt_slm_value > STANDARD_MAX_SLM):
-                screen_slm.ids.lb_info.text = "Kendaraan Anda Memiliki Tingkat Kebisingan Suara Klakson Diatas Ambang Batas"
-            if(dt_wtm_value >= STANDARD_MIN_WTM):
-                screen_wtm.ids.lb_info.text = "Kaca Kendaraan Anda Memiliki Tingkat Meneruskan Cahaya Dalam Range Ambang Batas"
-            else:
-                screen_wtm.ids.lb_info.text = "Kaca Kendaraan Anda Memiliki Tingkat Meneruskan Cahaya Diluar Ambang Batas"
 
             if(count_starting <= 0):
                 screen_hlm.ids.lb_test_subtitle.text = "HASIL PENGUKURAN"
                 screen_hlm.ids.lb_hlm.text = str(np.round(dt_hlm_value, 2))
-                screen_hlm.ids.lb_info.text = f"Ambang Batas intensitas cahaya adalah {STANDARD_MIN_HLM} lumen"
                 screen_slm.ids.lb_test_subtitle.text = "HASIL PENGUKURAN"
                 screen_slm.ids.lb_sound.text = str(np.round(dt_slm_value, 2))
-                screen_slm.ids.lb_info.text = f"Ambang Batas Kebisingan adalah {STANDARD_MIN_SLM} dB hingga {STANDARD_MAX_SLM} dB"
                 screen_wtm.ids.lb_test_subtitle.text = "HASIL PENGUKURAN"
                 screen_wtm.ids.lb_window_tint.text = str(np.round(dt_wtm_value, 2))
-                screen_wtm.ids.lb_info.text = f"Ambang Batas Tingkat Meneruskan Cahaya pada Kaca Kendaraan adalah {STANDARD_MIN_WTM} %"
                 
-                                              
+                if(dt_hlm_value >= STANDARD_MIN_HLM):
+                    screen_hlm.ids.lb_info.text = f"Ambang Batas intensitas cahaya adalah {STANDARD_MIN_HLM} lumen,
+                    \nLampu Depan Anda Memiliki Tingkat Intensitas Cahaya Dalam Range Ambang Batas"
+                else:
+                    screen_hlm.ids.lb_info.text = f"Ambang Batas intensitas cahaya adalah {STANDARD_MIN_HLM} lumen,
+                    \nLampu Depan Anda Memiliki Tingkat Intensitas Cahaya Diluar Ambang Batas"
+                if(dt_slm_value >= STANDARD_MIN_SLM and dt_slm_value <= STANDARD_MAX_SLM):
+                    screen_slm.ids.lb_info.text = f"Ambang Batas Kebisingan adalah {STANDARD_MIN_SLM} dB hingga {STANDARD_MAX_SLM} dB,
+                    \nKendaraan Anda Memiliki Tingkat Kebisingan Suara Klakson Dalam Range Ambang Batas"
+                elif(dt_slm_value < STANDARD_MIN_SLM):
+                    screen_slm.ids.lb_info.text = f"Ambang Batas Kebisingan adalah {STANDARD_MIN_SLM} dB hingga {STANDARD_MAX_SLM} dB,
+                    \nKendaraan Anda Memiliki Tingkat Kebisingan Suara Klakson Dibawah Ambang Batas"
+                elif(dt_slm_value > STANDARD_MAX_SLM):
+                    screen_slm.ids.lb_info.text = f"Ambang Batas Kebisingan adalah {STANDARD_MIN_SLM} dB hingga {STANDARD_MAX_SLM} dB,
+                    \nKendaraan Anda Memiliki Tingkat Kebisingan Suara Klakson Diatas Ambang Batas"
+                if(dt_wtm_value >= STANDARD_MIN_WTM):
+                    screen_wtm.ids.lb_info.text = f"Ambang Batas Tingkat Meneruskan Cahaya pada Kaca Kendaraan adalah {STANDARD_MIN_WTM} %,
+                    \nKaca Kendaraan Anda Memiliki Tingkat Meneruskan Cahaya Dalam Range Ambang Batas"
+                else:
+                    screen_wtm.ids.lb_info.text = f"Ambang Batas Tingkat Meneruskan Cahaya pada Kaca Kendaraan adalah {STANDARD_MIN_WTM} %,
+                    \nKaca Kendaraan Anda Memiliki Tingkat Meneruskan Cahaya Diluar Ambang Batas"
+                                                                
             elif(count_starting > 0):
                 if(flag_play):
                     screen_hlm.ids.lb_test_subtitle.text = "MEMULAI PENGUKURAN"
