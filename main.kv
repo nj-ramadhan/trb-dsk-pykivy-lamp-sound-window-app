@@ -1,6 +1,7 @@
 #:kivy 2.1.0
 
 #:import NoTransition kivy.uix.screenmanager.NoTransition
+#:include screen_home.kv
 #:include screen_login.kv
 #:include screen_main.kv
 #:include screen_wtm.kv
@@ -12,6 +13,11 @@
     id: screen_manager
     transition: NoTransition()
 
+    ScreenHome:
+        id: screen_home
+        name: 'screen_home'
+        screen_manager: screen_manager
+        
     ScreenLogin:
         id: screen_login
         name: 'screen_login'

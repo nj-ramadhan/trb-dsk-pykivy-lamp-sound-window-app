@@ -15,7 +15,7 @@
                     
             Image:
                 id: logo
-                source:'assets/logo-trb-dark.png'
+                source:'assets/images/logo-trb.png'
                 size_hint_x: 0.15
                 allow_stretch: True 
 
@@ -25,10 +25,10 @@
 
 				MDLabel:
 					id: title            
-					text: "VEHICLE INSPECTION INTEGRATION SYSTEM"
+					text: "VEHICLE INSPECTION INTEGRATION MANAGEMENT SYSTEM"
 					halign: "left"
 					valign: "middle"
-					font_style: 'H3'
+					font_style: 'H4'
 					theme_text_color: "Custom"
 					text_color: "#FFFFFF"
 
@@ -44,15 +44,6 @@
 			MDBoxLayout:
 				orientation: "vertical"
 				size_hint_x: 0.15
-
-				MDIconButton:
-					id: bt_shutdown
-					icon: "power"
-					md_bg_color: "#FF2A2A"
-					theme_text_color: "Custom"
-					text_color: "#EEEEEE"
-					size_hint_x: 1
-					on_press: root.exec_shutdown()
 
 				MDLabel:
 					id: lb_time
@@ -212,7 +203,7 @@
 						id: layout_sound
 
 						AsyncImage:
-							source: 'assets/hlm-display.png'
+							source: 'assets/images/display-hlm.png'
 							pos_hint: {'x':.0, 'y':-0.05}
 							fit_mode: 'contain' #scale-down, fill, contain, cover
 
@@ -280,12 +271,12 @@
 				size_hint_x: 0.4
 				
 				Image:
-					source:'assets/logo-sorong.png'
+					source:'assets/images/logo-sorong.png'
 					size_hint_x: 0.1
 					allow_stretch: True  
 
 				Image:
-					source:'assets/logo-dishub.png'
+					source:'assets/images/logo-dishub.png'
 					size_hint_x: 0.1
 					allow_stretch: True  
 
