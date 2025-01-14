@@ -225,38 +225,46 @@
 							pos_hint: {'x':.0, 'y':.0}
 
 						MDRectangleFlatIconButton:
-						# MDFloatingActionButton:
 							id: bt_reload
 							text: "ULANGI"
 							icon: "reload"
 							theme_text_color: "Custom"
 							text_color: "#EEEEEE"
-							pos_hint: {'x':.275, 'y':.06}
+							md_bg_color: "#FF2A2A"
+							pos_hint: {'x':.175, 'y':.06}
 							disabled: True
 							on_press: root.exec_reload()
 
 						MDRectangleFlatIconButton:
-						# MDFloatingActionButton:
 							id: bt_save
 							text: "SIMPAN"
 							icon: "printer"
 							theme_text_color: "Custom"
 							text_color: "#EEEEEE"
-							pos_hint: {'x':.425, 'y':.06}
+							md_bg_color: "#2CA02C"
+							pos_hint: {'x':.325, 'y':.06}
 							disabled: True
 							on_press: root.exec_save()
 
 						MDRectangleFlatIconButton:
-						# MDIconButton:
-						# MDFloatingActionButton:
 							id: bt_back
 							text: "KEMBALI"
 							icon: "arrow-left"
 							theme_text_color: "Custom"
-							md_bg_color: "4471C4"
 							text_color: "#EEEEEE"
-							pos_hint: {'x':.575, 'y':.06}
+							md_bg_color: "4471C4"
+							pos_hint: {'x':.475, 'y':.06}
 							on_press: root.open_screen_main()
+
+						MDRectangleFlatIconButton:
+							id: bt_hlm
+							text: "LANJUT UJI HEAD LAMP"
+							icon: "arrow-right"
+							theme_text_color: "Custom"
+							text_color: "#EEEEEE"
+							md_bg_color: "4471C4"
+							pos_hint: {'x':.650, 'y':.06}
+							on_press: root.open_screen_hlm()
 
 		# footer layout
         MDBoxLayout:

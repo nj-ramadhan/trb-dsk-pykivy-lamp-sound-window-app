@@ -92,6 +92,9 @@ dt_dash_pendaftaran = 0
 dt_dash_belum_uji = 0
 dt_dash_sudah_uji = 0
 
+audio = pyaudio.PyAudio()
+stream = audio.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
+
 class ScreenHome(MDScreen):
     def __init__(self, **kwargs):
         super(ScreenHome, self).__init__(**kwargs)
@@ -647,7 +650,7 @@ class ScreenMain(MDScreen):
             toast(f'Silahkan Login Untuk Melakukan Pengujian')   
 
     def exec_start_hlm(self):
-        global flag_play, stream, audio
+        global flag_play
 
         if(not flag_play):
             Clock.schedule_interval(self.regular_get_data_hlm, 1)
@@ -664,7 +667,7 @@ class ScreenMain(MDScreen):
             flag_play = True
 
     def exec_start_wtm(self):
-        global flag_play, stream, audio
+        global flag_play
         if(not flag_play):
             Clock.schedule_interval(self.regular_get_data_wtm, 1)
             self.open_screen_wtm()
@@ -779,7 +782,11 @@ class ScreenHLM(MDScreen):
         flag_play = False  
         screen_main.exec_reload_table()
         self.screen_manager.current = 'screen_main'
-        
+
+    def open_screen_slm(self):
+        self.exec_reload()
+        self.screen_manager.current = 'screen_slm'
+
 class ScreenSLM(MDScreen):        
     def __init__(self, **kwargs):
         super(ScreenSLM, self).__init__(**kwargs)
@@ -853,11 +860,15 @@ class ScreenSLM(MDScreen):
         screen_main.exec_reload_table()
         self.screen_manager.current = 'screen_main'
 
+    def open_screen_wtm(self):
+        self.exec_reload()
+        self.screen_manager.current = 'screen_wtm'
+
 class ScreenWTM(MDScreen):        
     def __init__(self, **kwargs):
         super(ScreenWTM, self).__init__(**kwargs)
         Clock.schedule_once(self.delayed_init, 2)
-        #
+
     def delayed_init(self, dt):
         pass
 
@@ -871,7 +882,6 @@ class ScreenWTM(MDScreen):
         count_get_data = COUNT_ACQUISITION
 
         if(not flag_play):
-            stream.start_stream()
             Clock.schedule_interval(screen_main.regular_get_data_wtm, 1)
             flag_play = True
 
@@ -888,7 +898,6 @@ class ScreenWTM(MDScreen):
         self.ids.lb_window_tint.text = "..."
 
         if(not flag_play):
-            stream.start_stream()
             Clock.schedule_interval(screen_main.regular_get_data_wtm, 1)
             flag_play = True
 
@@ -930,8 +939,9 @@ class ScreenWTM(MDScreen):
         Clock.unschedule(screen_main.regular_get_data_wtm)
         self.screen_manager.current = 'screen_main'
 
-    def exec_logout(self):
-        self.screen_manager.current = 'screen_login'
+    def open_screen_hlm(self):
+        self.exec_reload()
+        self.screen_manager.current = 'screen_hlm'
 
 class RootScreen(ScreenManager):
     pass             
