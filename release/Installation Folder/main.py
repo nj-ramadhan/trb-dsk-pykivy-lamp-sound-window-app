@@ -61,7 +61,7 @@ COUNT_ACQUISITION = 4
 TIME_OUT = 500
 
 FORMAT = pyaudio.paInt16
-CHANNELS = 2
+CHANNELS = 1
 RATE = 44100
 CHUNK = 1024
 RECORD_SECONDS = 0.8
@@ -92,8 +92,12 @@ dt_dash_pendaftaran = 0
 dt_dash_belum_uji = 0
 dt_dash_sudah_uji = 0
 
-audio = pyaudio.PyAudio()
-stream = audio.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
+try:
+    audio = pyaudio.PyAudio()
+    stream = audio.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
+except Exception as e:
+    toast_msg = f'Error Stream audio: {e}'
+    print(toast_msg)    
 
 class ScreenHome(MDScreen):
     def __init__(self, **kwargs):
