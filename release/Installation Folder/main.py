@@ -29,16 +29,24 @@ colors = {
     "Dark"  : {"StatusBar": "101010","AppBar": "#E0E0E0","Background": "#111111","CardsDialogs": "#222222","FlatButtonDown": "#DDDDDD",},
 }
 
+config_name = 'config.ini'
 if getattr(sys, 'frozen', False):
-    app_path = os.path.dirname(os.path.abspath(__file__))
+    application_path = os.path.dirname(sys.executable)
+    running_mode = 'Frozen/executable'
 else:
-    app_path = os.path.dirname(os.path.abspath(__file__))
+    try:
+        app_full_path = os.path.realpath(__file__)
+        application_path = os.path.dirname(app_full_path)
+        running_mode = "Non-interactive (e.g. 'python myapp.py')"
+    except NameError:
+        application_path = os.getcwd()
+        running_mode = 'Interactive'
 
-config_path = os.path.join(app_path, 'config.ini')
-print(f"Path config.ini: {config_path}")
-
+config_full_path = os.path.join(application_path, config_name)
 config = configparser.ConfigParser()
-config.read(config_path)
+config.read(config_full_path)
+
+# SQL setting
 DB_HOST = config['mysql']['DB_HOST']
 DB_USER = config['mysql']['DB_USER']
 DB_PASSWORD = config['mysql']['DB_PASSWORD']
@@ -47,18 +55,24 @@ TB_DATA = config['mysql']['TB_DATA']
 TB_USER = config['mysql']['TB_USER']
 TB_MERK = config['mysql']['TB_MERK']
 
-TB_MEASURE_HLM = config['mysql']['TB_MEASURE_HLM']
+# system setting
+TIME_OUT = int(config['setting']['TIME_OUT'])
+COUNT_STARTING = int(config['setting']['COUNT_STARTING'])
+COUNT_ACQUISITION = int(config['setting']['COUNT_ACQUISITION'])
+UPDATE_CAROUSEL_INTERVAL = float(config['setting']['UPDATE_CAROUSEL_INTERVAL'])
+UPDATE_CONNECTION_INTERVAL = float(config['setting']['UPDATE_CONNECTION_INTERVAL'])
+GET_DATA_INTERVAL = float(config['setting']['GET_DATA_INTERVAL'])
 
-STANDARD_MIN_HLM = float(config['standard']['STANDARD_MIN_HLM']) # in lumen
+COM_PORT_WTM = config['setting']['COM_PORT_WTM']
+
+# system standard
+STANDARD_MIN_HLM_LEFT = float(config['standard']['STANDARD_MIN_HLM_LEFT']) # in cd / candela
+STANDARD_MIN_HLM_RIGHT = float(config['standard']['STANDARD_MIN_HLM_RIGHT']) # in cd / candela
+STANDARD_MAX_ANGLE_DIFF_HLM_LEFT = float(config['standard']['STANDARD_MAX_ANGLE_DIFF_HLM_LEFT']) # in degree
+STANDARD_MAX_ANGLE_DIFF_HLM_RIGHT = float(config['standard']['STANDARD_MAX_ANGLE_DIFF_HLM_RIGHT']) # in degree
 STANDARD_MIN_SLM = float(config['standard']['STANDARD_MIN_SLM']) # in dbm
 STANDARD_MAX_SLM = float(config['standard']['STANDARD_MAX_SLM']) # in dbm
 STANDARD_MIN_WTM = float(config['standard']['STANDARD_MIN_WTM']) # in %
-
-COM_PORT_WTM = config['device']['COM_PORT_WTM']
-
-COUNT_STARTING = 3
-COUNT_ACQUISITION = 4
-TIME_OUT = 500
 
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
@@ -72,8 +86,10 @@ dt_slm_value = 0
 dt_slm_flag = 0
 dt_slm_user = 1
 dt_slm_post = str(time.strftime("%Y/%m/%d %H:%M:%S", time.localtime()))
-db_hlm_value = 0
-dt_hlm_value = 0
+dt_hlm_left_value = 0
+dt_hlm_right_value = 0
+dt_hlm_diff_left_value = 0
+dt_hlm_diff_right_value = 0
 dt_hlm_flag = 0
 dt_hlm_user = 1
 dt_slm_post = str(time.strftime("%Y/%m/%d %H:%M:%S", time.localtime()))
@@ -83,7 +99,7 @@ dt_wtm_user = 1
 dt_wtm_post = str(time.strftime("%Y/%m/%d %H:%M:%S", time.localtime()))
 dt_user = ""
 dt_no_antrian = ""
-dt_no_reg = ""
+dt_no_pol = ""
 dt_no_uji = ""
 dt_nama = ""
 dt_jenis_kendaraan = ""
@@ -105,9 +121,9 @@ class ScreenHome(MDScreen):
         Clock.schedule_once(self.delayed_init, 1)
 
     def delayed_init(self, dt):
-        Clock.schedule_interval(self.regular_update_display, 3)
+        Clock.schedule_interval(self.regular_update_carousel, UPDATE_CAROUSEL_INTERVAL)
 
-    def regular_update_display(self, dt):
+    def regular_update_carousel(self, dt):
         try:
             self.ids.carousel.index += 1
             
@@ -236,7 +252,7 @@ class ScreenMain(MDScreen):
         count_get_data = COUNT_ACQUISITION
         
         Clock.schedule_interval(self.regular_update_display, 1)
-        Clock.schedule_interval(self.regular_update_connection, 10)
+        Clock.schedule_interval(self.regular_update_connection, UPDATE_CONNECTION_INTERVAL)
         self.exec_reload_database()
         self.exec_reload_table()
 
@@ -250,9 +266,9 @@ class ScreenMain(MDScreen):
             dt_no_antrian           = f"{db_antrian[0, row]}"
             dt_no_pol               = f"{db_antrian[1, row]}"
             dt_no_uji               = f"{db_antrian[2, row]}"
-            dt_hlm_flag             = 'Belum Tes' if (int(db_antrian[3, row]) == 0) else 'Sudah Tes'
-            dt_slm_flag             = 'Belum Tes' if (int(db_antrian[4, row]) == 0) else 'Sudah Tes'
-            dt_wtm_flag             = 'Belum Tes' if (int(db_antrian[5, row]) == 0) else 'Sudah Tes'
+            dt_hlm_flag             = 'Lulus' if (int(db_antrian[3, row]) == 2) else 'Tidak Lulus' if (int(db_antrian[3, row]) == 1) else 'Belum Tes'
+            dt_slm_flag             = 'Lulus' if (int(db_antrian[4, row]) == 2) else 'Tidak Lulus' if (int(db_antrian[4, row]) == 1) else 'Belum Tes'
+            dt_wtm_flag             = 'Lulus' if (int(db_antrian[5, row]) == 2) else 'Tidak Lulus' if (int(db_antrian[5, row]) == 1) else 'Belum Tes'
             dt_nama                 = f"{db_antrian[6, row]}"
             dt_merk                 = f"{db_merk[np.where(db_merk == db_antrian[7, row])[0][0],1]}"
             dt_type                 = f"{db_antrian[8, row]}"
@@ -271,7 +287,7 @@ class ScreenMain(MDScreen):
         global flag_conn_stat
         global count_starting, count_get_data
         global dt_user, dt_no_antrian, dt_no_pol, dt_no_uji, dt_nama, dt_jenis_kendaraan
-        global dt_hlm_flag, dt_hlm_value, dt_hlm_user, dt_hlm_post
+        global dt_hlm_flag, dt_hlm_left_value, dt_hlm_right_value, dt_hlm_diff_left_value, dt_hlm_diff_right_value, dt_hlm_user, dt_hlm_post
         global dt_slm_flag, dt_slm_value, dt_slm_user, dt_slm_post
         global dt_wtm_flag, dt_wtm_value, dt_wtm_user, dt_wtm_post
         
@@ -296,19 +312,19 @@ class ScreenMain(MDScreen):
             screen_wtm.ids.lb_date.text = str(time.strftime("%d/%m/%Y", time.localtime()))
             
             screen_hlm.ids.lb_no_antrian.text = str(dt_no_antrian)
-            screen_hlm.ids.lb_no_reg.text = str(dt_no_reg)
+            screen_hlm.ids.lb_no_reg.text = str(dt_no_pol)
             screen_hlm.ids.lb_no_uji.text = str(dt_no_uji)
             screen_hlm.ids.lb_nama.text = str(dt_nama)
             screen_hlm.ids.lb_jenis_kendaraan.text = str(dt_jenis_kendaraan)
 
             screen_slm.ids.lb_no_antrian.text = str(dt_no_antrian)
-            screen_slm.ids.lb_no_reg.text = str(dt_no_reg)
+            screen_slm.ids.lb_no_reg.text = str(dt_no_pol)
             screen_slm.ids.lb_no_uji.text = str(dt_no_uji)
             screen_slm.ids.lb_nama.text = str(dt_nama)
             screen_slm.ids.lb_jenis_kendaraan.text = str(dt_jenis_kendaraan)
 
             screen_wtm.ids.lb_no_antrian.text = str(dt_no_antrian)
-            screen_wtm.ids.lb_no_reg.text = str(dt_no_reg)
+            screen_wtm.ids.lb_no_reg.text = str(dt_no_pol)
             screen_wtm.ids.lb_no_uji.text = str(dt_no_uji)
             screen_wtm.ids.lb_nama.text = str(dt_nama)
             screen_wtm.ids.lb_jenis_kendaraan.text = str(dt_jenis_kendaraan)
@@ -336,43 +352,42 @@ class ScreenMain(MDScreen):
 
             if(not flag_conn_stat):
                 self.ids.lb_comm.color = colors['Red']['A200']
-                self.ids.lb_comm.text = 'Alat WTM Tidak Terhubung'
+                self.ids.lb_comm.text = 'WTM Tidak Terhubung'
                 screen_home.ids.lb_comm.color = colors['Red']['A200']
-                screen_home.ids.lb_comm.text = 'Alat WTM Tidak Terhubung'
+                screen_home.ids.lb_comm.text = 'WTM Tidak Terhubung'
                 screen_login.ids.lb_comm.color = colors['Red']['A200']
-                screen_login.ids.lb_comm.text = 'Alat WTM Tidak Terhubung'
+                screen_login.ids.lb_comm.text = 'WTM Tidak Terhubung'
                 screen_hlm.ids.lb_comm.color = colors['Red']['A200']
-                screen_hlm.ids.lb_comm.text = 'Alat WTM Tidak Terhubung'                
+                screen_hlm.ids.lb_comm.text = 'WTM Tidak Terhubung'                
                 screen_slm.ids.lb_comm.color = colors['Red']['A200']
-                screen_slm.ids.lb_comm.text = 'Alat WTM Tidak Terhubung'
+                screen_slm.ids.lb_comm.text = 'WTM Tidak Terhubung'
                 screen_wtm.ids.lb_comm.color = colors['Red']['A200']
-                screen_wtm.ids.lb_comm.text = 'Alat WTM Tidak Terhubung'
+                screen_wtm.ids.lb_comm.text = 'WTM Tidak Terhubung'
             else:
                 self.ids.lb_comm.color = colors['Blue']['200']
-                self.ids.lb_comm.text = 'Alat WTM Terhubung'
+                self.ids.lb_comm.text = 'WTM Terhubung'
                 screen_home.ids.lb_comm.color = colors['Blue']['200']
-                screen_home.ids.lb_comm.text = 'Alat WTM Terhubung'
+                screen_home.ids.lb_comm.text = 'WTM Terhubung'
                 screen_login.ids.lb_comm.color = colors['Blue']['200']
-                screen_login.ids.lb_comm.text = 'Alat WTM Terhubung'
+                screen_login.ids.lb_comm.text = 'WTM Terhubung'
                 screen_hlm.ids.lb_comm.color = colors['Blue']['200']
-                screen_hlm.ids.lb_comm.text = 'Alat WTM Terhubung'
+                screen_hlm.ids.lb_comm.text = 'WTM Terhubung'
                 screen_slm.ids.lb_comm.color = colors['Blue']['200']
-                screen_slm.ids.lb_comm.text = 'Alat WTM Terhubung'
+                screen_slm.ids.lb_comm.text = 'WTM Terhubung'
                 screen_wtm.ids.lb_comm.color = colors['Blue']['200']
-                screen_wtm.ids.lb_comm.text = 'Alat WTM Terhubung'
+                screen_wtm.ids.lb_comm.text = 'WTM Terhubung'
 
             if(count_starting <= 0):
                 screen_hlm.ids.lb_test_subtitle.text = "HASIL PENGUKURAN"
-                screen_hlm.ids.lb_hlm.text = str(np.round(dt_hlm_value, 2))
                 screen_slm.ids.lb_test_subtitle.text = "HASIL PENGUKURAN"
                 screen_slm.ids.lb_sound.text = str(np.round(dt_slm_value, 2))
                 screen_wtm.ids.lb_test_subtitle.text = "HASIL PENGUKURAN"
                 screen_wtm.ids.lb_window_tint.text = str(np.round(dt_wtm_value, 2))
                 
-                if(dt_hlm_value >= STANDARD_MIN_HLM):
-                    screen_hlm.ids.lb_info.text = f"Ambang Batas intensitas cahaya adalah {STANDARD_MIN_HLM} lumen.\nLampu Depan Anda Memiliki Tingkat Intensitas Cahaya Dalam Range Ambang Batas"
+                if((dt_hlm_left_value >= STANDARD_MIN_HLM_LEFT) and (dt_hlm_right_value >= STANDARD_MIN_HLM_RIGHT) and (dt_hlm_diff_left_value <= STANDARD_MAX_ANGLE_DIFF_HLM_LEFT) and (dt_hlm_diff_right_value <= STANDARD_MAX_ANGLE_DIFF_HLM_LEFT)):
+                    screen_hlm.ids.lb_info.text = f"Ambang Batas intensitas cahaya kiri {STANDARD_MIN_HLM_LEFT}, kanan {STANDARD_MIN_HLM_RIGHT} candela, penyimpangan kiri {STANDARD_MAX_ANGLE_DIFF_HLM_LEFT}, kanan {STANDARD_MAX_ANGLE_DIFF_HLM_RIGHT}.\nLampu Depan Anda Memiliki Tingkat Intensitas Cahaya Dalam Range Ambang Batas"
                 else:
-                    screen_hlm.ids.lb_info.text = f"Ambang Batas intensitas cahaya adalah {STANDARD_MIN_HLM} lumen.\nLampu Depan Anda Memiliki Tingkat Intensitas Cahaya Diluar Ambang Batas"
+                    screen_hlm.ids.lb_info.text = f"Ambang Batas intensitas cahaya kiri {STANDARD_MIN_HLM_LEFT}, kanan {STANDARD_MIN_HLM_RIGHT} candela, penyimpangan kiri {STANDARD_MAX_ANGLE_DIFF_HLM_LEFT}, kanan {STANDARD_MAX_ANGLE_DIFF_HLM_RIGHT}.\nLampu Depan Anda Memiliki Tingkat Intensitas Cahaya Diluar Ambang Batas"
                 if(dt_slm_value >= STANDARD_MIN_SLM and dt_slm_value <= STANDARD_MAX_SLM):
                     screen_slm.ids.lb_info.text = f"Ambang Batas Kebisingan adalah {STANDARD_MIN_SLM} dB hingga {STANDARD_MAX_SLM} dB.\nKendaraan Anda Memiliki Tingkat Kebisingan Suara Klakson Dalam Range Ambang Batas"
                 elif(dt_slm_value < STANDARD_MIN_SLM):
@@ -387,7 +402,6 @@ class ScreenMain(MDScreen):
             elif(count_starting > 0):
                 if(flag_play):
                     screen_hlm.ids.lb_test_subtitle.text = "MEMULAI PENGUKURAN"
-                    screen_hlm.ids.lb_hlm.text = str(count_starting)
                     screen_hlm.ids.lb_info.text = "Silahkan Nyalakan Lampu Depan"
                     screen_slm.ids.lb_test_subtitle.text = "MEMULAI PENGUKURAN"
                     screen_slm.ids.lb_sound.text = str(count_starting)
@@ -398,7 +412,7 @@ class ScreenMain(MDScreen):
 
             if(count_get_data <= 0):
                 if(not flag_play):
-                    if(dt_hlm_value >= STANDARD_MIN_HLM):
+                    if((dt_hlm_left_value >= STANDARD_MIN_HLM_LEFT) and (dt_hlm_right_value >= STANDARD_MIN_HLM_RIGHT) and (dt_hlm_diff_left_value <= STANDARD_MAX_ANGLE_DIFF_HLM_LEFT) and (dt_hlm_diff_right_value <= STANDARD_MAX_ANGLE_DIFF_HLM_LEFT)):
                         screen_hlm.ids.lb_test_result.md_bg_color = colors['Green']['200']
                         screen_hlm.ids.lb_test_result.text = "LULUS"
                         dt_hlm_flag = "Lulus"
@@ -438,6 +452,8 @@ class ScreenMain(MDScreen):
                     screen_slm.ids.lb_test_result.text = ""                    
                     screen_wtm.ids.lb_test_result.md_bg_color = "#EEEEEE"
                     screen_wtm.ids.lb_test_result.text = ""
+            
+            self.ids.bt_logout.disabled = False if dt_user != '' else True
 
             self.ids.lb_operator.text = f'Login Sebagai: {dt_user}' if dt_user != '' else 'Silahkan Login'
             screen_home.ids.lb_operator.text = f'Login Sebagai: {dt_user}' if dt_user != '' else 'Silahkan Login'
@@ -518,9 +534,9 @@ class ScreenMain(MDScreen):
                         MDLabel(text=f"{db_antrian[0, i]}", size_hint_x= 0.05),
                         MDLabel(text=f"{db_antrian[1, i]}", size_hint_x= 0.08),
                         MDLabel(text=f"{db_antrian[2, i]}", size_hint_x= 0.08),
-                        MDLabel(text='Belum Tes' if (int(db_antrian[3, i]) == 0) else 'Sudah Tes', size_hint_x= 0.08),
-                        MDLabel(text='Belum Tes' if (int(db_antrian[4, i]) == 0) else 'Sudah Tes', size_hint_x= 0.08),
-                        MDLabel(text='Belum Tes' if (int(db_antrian[5, i]) == 0) else 'Sudah Tes', size_hint_x= 0.08),
+                        MDLabel(text='Lulus' if (int(db_antrian[3, i]) == 2) else 'Tidak Lulus' if (int(db_antrian[3, i]) == 1) else 'Belum Tes', size_hint_x= 0.08),
+                        MDLabel(text='Lulus' if (int(db_antrian[4, i]) == 2) else 'Tidak Lulus' if (int(db_antrian[4, i]) == 1) else 'Belum Tes', size_hint_x= 0.08),
+                        MDLabel(text='Lulus' if (int(db_antrian[5, i]) == 2) else 'Tidak Lulus' if (int(db_antrian[5, i]) == 1) else 'Belum Tes', size_hint_x= 0.08),
                         MDLabel(text=f"{db_antrian[6, i]}", size_hint_x= 0.12),
                         MDLabel(text=f"{db_merk[np.where(db_merk == db_antrian[7, i])[0][0],1]}", size_hint_x= 0.08),
                         MDLabel(text=f"{db_antrian[8, i]}", size_hint_x= 0.05),
@@ -551,7 +567,7 @@ class ScreenMain(MDScreen):
 
     def regular_get_data_hlm(self, dt):
         global flag_play
-        global dt_hlm_value
+        global dt_hlm_left_value, dt_hlm_right_value, dt_hlm_diff_left_value, dt_hlm_diff_right_value
         global count_starting, count_get_data
         try:
             if flag_play:
@@ -562,11 +578,6 @@ class ScreenMain(MDScreen):
                 elif(count_get_data <= 0):
                     flag_play = False
                     Clock.unschedule(self.regular_get_data_hlm)
-                mycursor = mydb.cursor()
-                mycursor.execute(f"SELECT hlm_value FROM {TB_MEASURE_HLM}")
-                dt_hlm_value, = mycursor.fetchone()
-                mydb.commit()
-
         except Exception as e:
             toast_msg = f'error get data: {e}'
             print(toast_msg) 
@@ -635,17 +646,17 @@ class ScreenMain(MDScreen):
         if (dt_user != ''):
             if (dt_hlm_flag == 'Belum Tes'):
                 if(not flag_play):
-                    Clock.schedule_interval(self.regular_get_data_hlm, 1)
+                    Clock.schedule_interval(self.regular_get_data_hlm, GET_DATA_INTERVAL)
                     self.exec_start_hlm()
                     flag_play = True
             elif (dt_slm_flag == 'Belum Tes'):
                 if(not flag_play):
-                    Clock.schedule_interval(self.regular_get_data_slm, 1)
+                    Clock.schedule_interval(self.regular_get_data_slm, GET_DATA_INTERVAL)
                     self.exec_start_slm()
                     flag_play = True
             elif (dt_wtm_flag == 'Belum Tes'):
                 if(not flag_play):
-                    Clock.schedule_interval(self.regular_get_data_wtm, 1)
+                    Clock.schedule_interval(self.regular_get_data_wtm, GET_DATA_INTERVAL)
                     self.exec_start_wtm()
                     flag_play = True
             else:
@@ -657,7 +668,7 @@ class ScreenMain(MDScreen):
         global flag_play
 
         if(not flag_play):
-            Clock.schedule_interval(self.regular_get_data_hlm, 1)
+            Clock.schedule_interval(self.regular_get_data_hlm, GET_DATA_INTERVAL)
             self.open_screen_hlm()
             flag_play = True
 
@@ -666,14 +677,15 @@ class ScreenMain(MDScreen):
 
         if(not flag_play):
             stream.start_stream()
-            Clock.schedule_interval(self.regular_get_data_slm, 1)
+            Clock.schedule_interval(self.regular_get_data_slm, GET_DATA_INTERVAL)
             self.open_screen_slm()
             flag_play = True
 
     def exec_start_wtm(self):
         global flag_play
+
         if(not flag_play):
-            Clock.schedule_interval(self.regular_get_data_wtm, 1)
+            Clock.schedule_interval(self.regular_get_data_wtm, GET_DATA_INTERVAL)
             self.open_screen_wtm()
             flag_play = True
 
@@ -729,18 +741,34 @@ class ScreenHLM(MDScreen):
         pass
 
     def reset_data(self):
-        global count_starting, count_get_data, dt_hlm_value
+        global count_starting, count_get_data, dt_hlm_left_value, dt_hlm_right_value, dt_hlm_diff_left_value, dt_hlm_diff_right_value
 
         count_starting = COUNT_STARTING
         count_get_data = COUNT_ACQUISITION
-        dt_hlm_value = 0.0
+        dt_hlm_left_value = 0.0
+        dt_hlm_right_value = 0.0
+        dt_hlm_diff_left_value = 0.0
+        dt_hlm_diff_right_value = 0.0
+
+    def exec_calculate(self):
+        global dt_hlm_left_value, dt_hlm_right_value, dt_hlm_diff_left_value, dt_hlm_diff_right_value
+
+        try:
+            dt_hlm_left_value = float(self.ids.tx_hlm_left.text)
+            dt_hlm_right_value = float(self.ids.tx_hlm_right.text)
+            dt_hlm_diff_left_value = float(self.ids.tx_hlm_diff_left.text)
+            dt_hlm_diff_right_value = float(self.ids.tx_hlm_diff_right.text)
+        except Exception as e:
+            toast("Silahkan lengkapi semua data terlebih dahulu")
+            print(f"Error calculate: {e}")
+
 
     def exec_start(self):
         global flag_play
         screen_main = self.screen_manager.get_screen('screen_main')
         self.reset_data()
         if(not flag_play):
-            Clock.schedule_interval(screen_main.regular_get_data_hlm, 1)
+            Clock.schedule_interval(screen_main.regular_get_data_hlm, GET_DATA_INTERVAL)
             flag_play = True
 
     def exec_reload(self):
@@ -751,25 +779,25 @@ class ScreenHLM(MDScreen):
         self.ids.bt_reload.disabled = True
 
         if(not flag_play):
-            Clock.schedule_interval(screen_main.regular_get_data_hlm, 1)
+            Clock.schedule_interval(screen_main.regular_get_data_hlm, GET_DATA_INTERVAL)
             flag_play = True
 
     def exec_save(self):
         global flag_play
         global count_starting, count_get_data
         global mydb, db_antrian
-        global dt_no_antrian, dt_no_reg, dt_no_uji, dt_nama, dt_jenis_kendaraan
-        global dt_hlm_flag, dt_hlm_value, dt_hlm_user, dt_hlm_post
+        global dt_no_antrian, dt_no_pol, dt_no_uji, dt_nama, dt_jenis_kendaraan
+        global dt_hlm_flag, dt_hlm_left_value, dt_hlm_right_value, dt_hlm_diff_left_value, dt_hlm_diff_right_value, dt_hlm_user, dt_hlm_post
 
         try:
             self.ids.bt_save.disabled = True
 
             mycursor = mydb.cursor()
-            sql = f"UPDATE {TB_DATA} SET hlm_flag = %s, hlm_value = %s, hlm_user = %s, hlm_post = %s WHERE noantrian = %s"
+            sql = f"UPDATE {TB_DATA} SET hlm_flag = %s, hlm_left_value = %s, hlm_right_value = %s, hlm_diff_left_value = %s, hlm_diff_right_value = %s, hlm_user = %s, hlm_post = %s WHERE noantrian = %s"
             sql_hlm_flag = (1 if dt_hlm_flag == "Lulus" else 2)
             dt_hlm_post = str(time.strftime("%Y/%m/%d %H:%M:%S", time.localtime()))
             print_datetime = str(time.strftime("%d %B %Y %H:%M:%S", time.localtime()))
-            sql_val = (sql_hlm_flag, dt_hlm_value, dt_hlm_user, dt_hlm_post, dt_no_antrian)
+            sql_val = (sql_hlm_flag, dt_hlm_left_value, dt_hlm_right_value, dt_hlm_diff_left_value, dt_hlm_diff_right_value, dt_hlm_user, dt_hlm_post, dt_no_antrian)
             mycursor.execute(sql, sql_val)
             mydb.commit()
             self.open_screen_main()
@@ -815,7 +843,7 @@ class ScreenSLM(MDScreen):
 
         if(not flag_play):
             stream.start_stream()
-            Clock.schedule_interval(screen_main.regular_get_data_slm, 1)
+            Clock.schedule_interval(screen_main.regular_get_data_slm, GET_DATA_INTERVAL)
             flag_play = True
 
     def exec_reload(self):
@@ -827,14 +855,14 @@ class ScreenSLM(MDScreen):
 
         if(not flag_play):
             stream.start_stream()
-            Clock.schedule_interval(screen_main.regular_get_data_slm, 1)
+            Clock.schedule_interval(screen_main.regular_get_data_slm, GET_DATA_INTERVAL)
             flag_play = True
 
     def exec_save(self):
         global flag_play
         global count_starting, count_get_data
         global mydb, db_antrian
-        global dt_no_antrian, dt_no_reg, dt_no_uji, dt_nama, dt_jenis_kendaraan
+        global dt_no_antrian, dt_no_pol, dt_no_uji, dt_nama, dt_jenis_kendaraan
         global dt_slm_flag, dt_slm_value, dt_slm_user, dt_slm_post
 
         try:
@@ -886,7 +914,7 @@ class ScreenWTM(MDScreen):
         count_get_data = COUNT_ACQUISITION
 
         if(not flag_play):
-            Clock.schedule_interval(screen_main.regular_get_data_wtm, 1)
+            Clock.schedule_interval(screen_main.regular_get_data_wtm, GET_DATA_INTERVAL)
             flag_play = True
 
     def exec_reload(self):
@@ -902,14 +930,14 @@ class ScreenWTM(MDScreen):
         self.ids.lb_window_tint.text = "..."
 
         if(not flag_play):
-            Clock.schedule_interval(screen_main.regular_get_data_wtm, 1)
+            Clock.schedule_interval(screen_main.regular_get_data_wtm, GET_DATA_INTERVAL)
             flag_play = True
 
     def exec_save(self):
         global flag_play
         global count_starting, count_get_data
         global mydb, db_antrian
-        global dt_no_antrian, dt_no_reg, dt_no_uji, dt_nama, dt_jenis_kendaraan
+        global dt_no_antrian, dt_no_pol, dt_no_uji, dt_nama, dt_jenis_kendaraan
         global dt_wtm_flag, dt_wtm_value, dt_wtm_user, dt_wtm_post
 
         try:

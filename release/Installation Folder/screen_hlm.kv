@@ -200,11 +200,12 @@
 					size_hint_x: 0.5
 
 					MDFloatLayout:
-						id: layout_sound
+						id: layout_display
 
 						AsyncImage:
 							source: 'assets/images/display-hlm.png'
 							pos_hint: {'x':.0, 'y':-0.05}
+							opacity: 0.3
 							fit_mode: 'contain' #scale-down, fill, contain, cover
 
 						MDLabel:
@@ -215,14 +216,73 @@
 							font_style: 'H6'
 							pos_hint: {'x':.0, 'y':.30}
 
-						MDLabel:
-							id: lb_hlm
-							text: "..."
-							halign: "center"
-							valign: "middle"
-							font_style: 'Display'
-							font_size: '80dp'
-							pos_hint: {'x':.0, 'y':.0}
+						MDTextField:
+							id: tx_hlm_left
+							font_size: '40sp'
+							font_name: "Recharge"
+							font_name_hint_text:'Recharge'
+							icon_left: "lamp"
+							hint_text: "Daya Pancar Kiri"
+							text_color_focus: "#4471C4"
+							hint_text_color_focus: "#4471C4"
+							line_color_focus: "#4471C4"	
+							icon_left_color_focus: "#4471C4"				
+							mode: "rectangle"
+							pos_hint: {'x':.0, 'y':.5}
+							size_hint_x: 0.4
+							input_filter: 'float'
+							on_text_validate: root.exec_calculate()
+
+						MDTextField:
+							id: tx_hlm_right
+							font_size: '40sp'
+							font_name: "Recharge"
+							font_name_hint_text:'Recharge'
+							icon_left: "lamp"
+							hint_text: "Daya Pancar Kanan"
+							text_color_focus: "#4471C4"
+							hint_text_color_focus: "#4471C4"
+							line_color_focus: "#4471C4"	
+							icon_left_color_focus: "#4471C4"				
+							mode: "rectangle"
+							pos_hint: {'x':.6, 'y':.5}
+							size_hint_x: 0.4
+							input_filter: 'float'
+							on_text_validate: root.exec_calculate()
+
+						MDTextField:
+							id: tx_hlm_diff_left
+							font_size: '40sp'
+							font_name: "Recharge"
+							font_name_hint_text:'Recharge'
+							icon_left: "lamp"
+							hint_text: "Penyimpangan Kiri"
+							text_color_focus: "#4471C4"
+							hint_text_color_focus: "#4471C4"
+							line_color_focus: "#4471C4"	
+							icon_left_color_focus: "#4471C4"				
+							mode: "rectangle"
+							pos_hint: {'x':.0, 'y':.3}
+							size_hint_x: 0.4
+							input_filter: 'float'
+							on_text_validate: root.exec_calculate()
+
+						MDTextField:
+							id: tx_hlm_diff_right
+							font_size: '40sp'
+							font_name: "Recharge"
+							font_name_hint_text:'Recharge'
+							icon_left: "lamp"
+							hint_text: "Penyimpangan Kanan"
+							text_color_focus: "#4471C4"
+							hint_text_color_focus: "#4471C4"
+							line_color_focus: "#4471C4"	
+							icon_left_color_focus: "#4471C4"				
+							mode: "rectangle"
+							pos_hint: {'x':.6, 'y':.3}
+							size_hint_x: 0.4
+							input_filter: 'float'
+							on_text_validate: root.exec_calculate()
 
 						MDRectangleFlatIconButton:
 							id: bt_reload
