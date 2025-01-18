@@ -383,7 +383,35 @@ class ScreenMain(MDScreen):
                 screen_slm.ids.lb_sound.text = str(np.round(dt_slm_value, 2))
                 screen_wtm.ids.lb_test_subtitle.text = "HASIL PENGUKURAN"
                 screen_wtm.ids.lb_window_tint.text = str(np.round(dt_wtm_value, 2))
-                
+
+                if(dt_hlm_left_value >= STANDARD_MIN_HLM_LEFT):
+                    screen_hlm.ids.bt_hlm_left_pass.icon = 'check'
+                    screen_hlm.ids.bt_hlm_left_pass.md_bg_color  = colors['Green']['200']
+                else:
+                    screen_hlm.ids.bt_hlm_left_pass.icon = 'cancel'
+                    screen_hlm.ids.bt_hlm_left_pass.md_bg_color  = colors['Red']['A200']
+
+                if(dt_hlm_right_value >= STANDARD_MIN_HLM_RIGHT):
+                    screen_hlm.ids.bt_hlm_right_pass.icon = 'check'
+                    screen_hlm.ids.bt_hlm_right_pass.md_bg_color  = colors['Green']['200']
+                else:
+                    screen_hlm.ids.bt_hlm_right_pass.icon = 'cancel'
+                    screen_hlm.ids.bt_hlm_right_pass.md_bg_color  = colors['Red']['A200']
+
+                if(dt_hlm_diff_left_value <= STANDARD_MAX_ANGLE_DIFF_HLM_LEFT and dt_hlm_diff_left_value > 0.0):
+                    screen_hlm.ids.bt_hlm_diff_left_pass.icon = 'check'
+                    screen_hlm.ids.bt_hlm_diff_left_pass.md_bg_color  = colors['Green']['200']
+                else:
+                    screen_hlm.ids.bt_hlm_diff_left_pass.icon = 'cancel'
+                    screen_hlm.ids.bt_hlm_diff_left_pass.md_bg_color  = colors['Red']['A200']
+
+                if(dt_hlm_diff_right_value <= STANDARD_MAX_ANGLE_DIFF_HLM_LEFT and dt_hlm_diff_right_value > 0.0):
+                    screen_hlm.ids.bt_hlm_diff_right_pass.icon = 'check'
+                    screen_hlm.ids.bt_hlm_diff_right_pass.md_bg_color  = colors['Green']['200']
+                else:
+                    screen_hlm.ids.bt_hlm_diff_right_pass.icon = 'cancel'
+                    screen_hlm.ids.bt_hlm_diff_right_pass.md_bg_color  = colors['Red']['A200']
+
                 if((dt_hlm_left_value >= STANDARD_MIN_HLM_LEFT) and (dt_hlm_right_value >= STANDARD_MIN_HLM_RIGHT) and (dt_hlm_diff_left_value <= STANDARD_MAX_ANGLE_DIFF_HLM_LEFT) and (dt_hlm_diff_right_value <= STANDARD_MAX_ANGLE_DIFF_HLM_LEFT)):
                     screen_hlm.ids.lb_info.text = f"Ambang Batas intensitas cahaya kiri {STANDARD_MIN_HLM_LEFT}, kanan {STANDARD_MIN_HLM_RIGHT} candela, penyimpangan kiri {STANDARD_MAX_ANGLE_DIFF_HLM_LEFT}, kanan {STANDARD_MAX_ANGLE_DIFF_HLM_RIGHT}.\nLampu Depan Anda Memiliki Tingkat Intensitas Cahaya Dalam Range Ambang Batas"
                 else:
