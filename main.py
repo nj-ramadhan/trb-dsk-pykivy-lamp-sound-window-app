@@ -312,7 +312,11 @@ class ScreenMain(MDScreen):
             screen_slm.ids.lb_date.text = str(time.strftime("%d/%m/%Y", time.localtime()))
             screen_wtm.ids.lb_time.text = str(time.strftime("%H:%M:%S", time.localtime()))
             screen_wtm.ids.lb_date.text = str(time.strftime("%d/%m/%Y", time.localtime()))
-            
+
+            self.ids.lb_dash_pendaftaran.text = str(dt_dash_pendaftaran)
+            self.ids.lb_dash_belum_uji.text = str(dt_dash_belum_uji)
+            self.ids.lb_dash_sudah_uji.text = str(dt_dash_sudah_uji)
+
             screen_hlm.ids.lb_no_antrian.text = str(dt_no_antrian)
             screen_hlm.ids.lb_no_reg.text = str(dt_no_pol)
             screen_hlm.ids.lb_no_uji.text = str(dt_no_uji)
@@ -567,12 +571,12 @@ class ScreenMain(MDScreen):
                         MDLabel(text=f"{db_antrian[0, i]}", size_hint_x= 0.05),
                         MDLabel(text=f"{db_antrian[1, i]}", size_hint_x= 0.08),
                         MDLabel(text=f"{db_antrian[2, i]}", size_hint_x= 0.08),
-                        MDLabel(text='Lulus' if (int(db_antrian[3, i]) == 2) else 'Tidak Lulus' if (int(db_antrian[3, i]) == 1) else 'Belum Tes', size_hint_x= 0.08),
-                        MDLabel(text='Lulus' if (int(db_antrian[4, i]) == 2) else 'Tidak Lulus' if (int(db_antrian[4, i]) == 1) else 'Belum Tes', size_hint_x= 0.08),
-                        MDLabel(text='Lulus' if (int(db_antrian[5, i]) == 2) else 'Tidak Lulus' if (int(db_antrian[5, i]) == 1) else 'Belum Tes', size_hint_x= 0.08),
+                        MDLabel(text='Lulus' if (int(db_antrian[3, i]) == 2) else 'Tidak Lulus' if (int(db_antrian[3, i]) == 1) else 'Belum Tes', size_hint_x= 0.07),
+                        MDLabel(text='Lulus' if (int(db_antrian[4, i]) == 2) else 'Tidak Lulus' if (int(db_antrian[4, i]) == 1) else 'Belum Tes', size_hint_x= 0.07),
+                        MDLabel(text='Lulus' if (int(db_antrian[5, i]) == 2) else 'Tidak Lulus' if (int(db_antrian[5, i]) == 1) else 'Belum Tes', size_hint_x= 0.07),
                         MDLabel(text=f"{db_antrian[6, i]}", size_hint_x= 0.12),
                         MDLabel(text=f"{db_merk[np.where(db_merk == db_antrian[7, i])[0][0],1]}", size_hint_x= 0.08),
-                        MDLabel(text=f"{db_antrian[8, i]}", size_hint_x= 0.05),
+                        MDLabel(text=f"{db_antrian[8, i]}", size_hint_x= 0.08),
                         MDLabel(text=f"{db_antrian[9, i]}", size_hint_x= 0.15),
                         MDLabel(text=f"{db_antrian[10, i]}", size_hint_x= 0.05),
                         MDLabel(text=f"{db_antrian[11, i]}", size_hint_x= 0.08),
@@ -824,17 +828,14 @@ class ScreenHLM(MDScreen):
 
         try:
             self.ids.bt_save.disabled = True
-
             mycursor = mydb.cursor()
             sql = f"UPDATE {TB_DATA} SET hlm_flag = %s, hlm_left_value = %s, hlm_right_value = %s, hlm_diff_left_value = %s, hlm_diff_right_value = %s, hlm_user = %s, hlm_post = %s WHERE noantrian = %s"
             sql_hlm_flag = (1 if dt_hlm_flag == "Lulus" else 2)
             dt_hlm_post = str(time.strftime("%Y/%m/%d %H:%M:%S", time.localtime()))
-            print_datetime = str(time.strftime("%d %B %Y %H:%M:%S", time.localtime()))
             sql_val = (sql_hlm_flag, dt_hlm_left_value, dt_hlm_right_value, dt_hlm_diff_left_value, dt_hlm_diff_right_value, dt_hlm_user, dt_hlm_post, dt_no_antrian)
             mycursor.execute(sql, sql_val)
             mydb.commit()
             self.open_screen_main()
-
         except Exception as e:
             toast_msg = f'error Save Data: {e}'
             toast(toast_msg) 
@@ -900,18 +901,14 @@ class ScreenSLM(MDScreen):
 
         try:
             self.ids.bt_save.disabled = True
-
             mycursor = mydb.cursor()
-
             sql = f"UPDATE {TB_DATA} SET slm_flag = %s, slm_value = %s, slm_user = %s, slm_post = %s WHERE noantrian = %s"
             sql_slm_flag = (1 if dt_slm_flag == "Lulus" else 2)
             dt_slm_post = str(time.strftime("%Y/%m/%d %H:%M:%S", time.localtime()))
-            print_datetime = str(time.strftime("%d %B %Y %H:%M:%S", time.localtime()))
             sql_val = (sql_slm_flag, float(dt_slm_value), dt_slm_user, dt_slm_post, dt_no_antrian)
             mycursor.execute(sql, sql_val)
             mydb.commit()
             self.open_screen_main()
-
         except Exception as e:
             toast_msg = f'error Save Data: {e}'
             toast(toast_msg) 
@@ -975,18 +972,14 @@ class ScreenWTM(MDScreen):
 
         try:
             self.ids.bt_save.disabled = True
-
             mycursor = mydb.cursor()
-
             sql = f"UPDATE {TB_DATA} SET wtm_flag = %s, wtm_value = %s, wtm_user = %s, wtm_post = %s WHERE noantrian = %s"
             sql_wtm_flag = (1 if dt_wtm_flag == "Lulus" else 2)
             dt_wtm_post = str(time.strftime("%Y/%m/%d %H:%M:%S", time.localtime()))
-            print_datetime = str(time.strftime("%d %B %Y %H:%M:%S", time.localtime()))
             sql_val = (sql_wtm_flag, dt_wtm_value, dt_wtm_user, dt_wtm_post, dt_no_antrian)
             mycursor.execute(sql, sql_val)
             mydb.commit()
             self.open_screen_main()
-        
         except Exception as e:
             toast_msg = f'error Save Data: {e}'
             toast(toast_msg) 
