@@ -1,3 +1,5 @@
+from kivy.config import Config
+Config.set('kivy', 'keyboard_mode', 'systemanddock')
 from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.core.window import Window
@@ -546,10 +548,13 @@ class ScreenMain(MDScreen):
             result_tb_merk = tb_merk.fetchall()
             mydb.commit()
             db_merk = np.array(result_tb_merk)
+        except Exception as e:
+            toast_msg = f'Error Fetch Database: {e}'
+            print(toast_msg)
 
+        try:
             layout_list = self.ids.layout_list
             layout_list.clear_widgets(children=None)
-
         except Exception as e:
             toast_msg = f'Error Remove Widget: {e}'
             print(toast_msg)
