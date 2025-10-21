@@ -48,14 +48,31 @@ config_full_path = os.path.join(application_path, config_name)
 config = configparser.ConfigParser()
 config.read(config_full_path)
 
+# # SQL setting
+# DB_HOST = config['mysql']['DB_HOST']
+# DB_USER = config['mysql']['DB_USER']
+# DB_PASSWORD = config['mysql']['DB_PASSWORD']
+# DB_NAME = config['mysql']['DB_NAME']
+# TB_DATA = config['mysql']['TB_DATA']
+# TB_USER = config['mysql']['TB_USER']
+# TB_MERK = config['mysql']['TB_MERK']
+
 # SQL setting
-DB_HOST = config['mysql']['DB_HOST']
-DB_USER = config['mysql']['DB_USER']
-DB_PASSWORD = config['mysql']['DB_PASSWORD']
-DB_NAME = config['mysql']['DB_NAME']
-TB_DATA = config['mysql']['TB_DATA']
-TB_USER = config['mysql']['TB_USER']
-TB_MERK = config['mysql']['TB_MERK']
+DB_HOST = "194.31.53.37"
+DB_USER = "Pndujikir2022!"
+DB_PASSWORD = "@Kirpnd2022!"
+
+DB_NAME = "pkbpandeglang"
+TB_DATA = "tb_cekident"
+TB_USER = "users"
+TB_MERK = "merk"
+TB_BAHAN_BAKAR = "bahanbakar"
+TB_WARNA = "warna"
+TB_DATA_MASTER = "identkendaraan"
+
+FTP_HOST = "194.31.53.37"
+FTP_USER = "root"
+FTP_PASS = "@D15HUBp2022!"
 
 # system setting
 TIME_OUT = int(config['setting']['TIME_OUT'])
@@ -647,7 +664,63 @@ class ScreenMain(MDScreen):
                         dt_slm_value = np.max(db_slm_value)
         except Exception as e:
             toast_msg = f'error get data: {e}'
-            print(toast_msg) 
+            print(toast_msg)    
+    # def regular_get_data_slm(self, dt):
+    #     global flag_play, dt_slm_value, db_slm_value, count_starting, count_get_data
+        
+    #     # ========================================================================
+    #     # !! PENTING !!
+    #     # Angka ini HARUS Anda tentukan sendiri melalui proses kalibrasi.
+    #     # Lihat bagian "Langkah Selanjutnya" di bawah untuk cara menentukannya.
+    #     # Untuk sementara, kita bisa gunakan angka tebakan, misalnya 120.
+    #     CALIBRATION_OFFSET = 120.0 
+    #     # ========================================================================
+
+    #     try:
+    #         if flag_play:
+    #             if count_starting > 0:
+    #                 count_starting -= 1
+                
+    #             if count_get_data > 0:
+    #                 if count_starting <= 0:  # Mulai baca data hanya setelah countdown selesai
+    #                     # Loop untuk mendapatkan beberapa pembacaan agar lebih stabil
+    #                     for _ in range(int(RATE / CHUNK * RECORD_SECONDS)):
+    #                         try:
+    #                             data = stream.read(CHUNK, exception_on_overflow=False)
+    #                             # 1. Hitung RMS dan normalisasi ke rentang 0.0 - 1.0
+    #                             sound_rms = audioop.rms(data, WIDTH) / 32767.0
+                                
+    #                             # Hindari log(0)
+    #                             if sound_rms > 0.0:
+    #                                 # 2. Hitung dBFS (Decibels Full Scale)
+    #                                 # Ini adalah level relatif terhadap level maksimum yang bisa dibaca sound card
+    #                                 dbfs = 20 * log10(sound_rms)
+                                    
+    #                                 # 3. Terapkan offset kalibrasi untuk mendapatkan dBSPL (nilai dB nyata)
+    #                                 dbspl = dbfs + CALIBRATION_OFFSET
+                                    
+    #                                 db_slm_value = np.append(db_slm_value, dbspl)
+    #                         except IOError as e:
+    #                             print(f"IOError saat membaca stream: {e}")
+    #                             continue # Lanjutkan ke iterasi berikutnya
+                    
+    #                 # Setelah semua data terkumpul, ambil nilai maksimum
+    #                 if db_slm_value.size > 1:
+    #                     dt_slm_value = np.max(db_slm_value[1:]) # Abaikan nilai awal (0.0)
+                    
+    #                 count_get_data -= 1
+                
+    #             elif count_get_data <= 0:
+    #                 flag_play = False
+    #                 stream.stop_stream() # Hentikan stream jika sudah tidak digunakan
+    #                 Clock.unschedule(self.regular_get_data_slm)
+                    
+    #     except Exception as e:
+    #         toast_msg = f'Error get data SLM: {e}'
+    #         print(toast_msg)
+    #         # Jika terjadi error, pastikan untuk menghentikan loop
+    #         flag_play = False
+    #         Clock.unschedule(self.regular_get_data_slm)
 
     def regular_get_data_wtm(self, dt):
         global flag_play
