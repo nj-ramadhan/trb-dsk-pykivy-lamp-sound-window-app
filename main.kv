@@ -4,9 +4,11 @@
 #:include screen_home.kv
 #:include screen_login.kv
 #:include screen_main.kv
+#:include screen_menu.kv
 #:include screen_wtm.kv
 #:include screen_slm.kv
 #:include screen_hlm.kv
+#:include screen_Calibration.kv
 
 # ScreenManager:
 <RootScreen>:
@@ -27,6 +29,11 @@
         id: screen_main
         name: 'screen_main'
         screen_manager: screen_manager
+    
+    ScreenMenu:
+        id: screen_menu
+        name: 'screen_menu'
+        screen_manager: screen_manager
 
     ScreenWTM:
         id: screen_wtm
@@ -42,3 +49,8 @@
         id: screen_hlm
         name: 'screen_hlm'
         screen_manager: screen_manager
+
+    ScreenCalibration:
+        id: screen_Calibration
+        name: 'screen_Calibration'
+        screen_manager: screen_manager  
