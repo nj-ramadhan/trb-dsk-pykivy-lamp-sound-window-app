@@ -2,9 +2,9 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "VIIMS - Head Lamp, Sound Level & Window Tint Meter Application"
-#define MyAppVersion "1.8.250119"
+#define MyAppVersion "2.1.251030"
 #define MyAppPublisher "PT. Tiga Ratu Berkarya"
-#define MyAppExeName "TRB-VIIMS-LampSoundWindowMeterApp.exe"
+#define MyAppExeName "TRB-VIIMS-LampSoundWindowMeterApp-Sorong.exe"
 #define MyAppAssocName "VIIMS - Head Lamp, Sound Level & Window Tint Meter Application Files"
 #define MyAppAssocExt ".msi"
 #define MyAppAssocKey StringChange(MyAppAssocName, " ", "") + MyAppAssocExt
@@ -12,7 +12,7 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{AA74F970-4F02-47C5-B1BC-E094252B1E7C}}
+AppId={{5B4983F9-7E60-42FD-AB0F-425D24FCAB8E}}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
@@ -30,7 +30,7 @@ ChangesAssociations=yes
 DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
-OutputBaseFilename=TRB-VIIMS-LampSoundWindowMeterApp-Installer
+OutputBaseFilename=TRB-VIIMS-LampSoundWindowMeterApp-Sorong-Installer
 SetupIconFile=D:\PRJ\TRB - Vehicle Inspection Integration Management System\trb-dsk-pykivy-lamp-sound-window-app\release\Application Folder\assets\images\logo-hlslwt-app.ico
 Compression=lzma
 SolidCompression=yes
