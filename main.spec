@@ -7,15 +7,9 @@ from kivymd import hooks_path as kivymd_hooks_path
 a = Analysis(['main.py'],
              pathex=['C:\\Users\\path\\to\\file'],
              binaries=[],
-<<<<<<< HEAD
-             datas=[('main.kv', '.'), ('screen_home.kv', '.'), ('screen_login.kv', '.'), ('screen_main.kv', '.'),
-                    ('screen_hlm.kv', '.'), ('screen_slm.kv', '.'), ('screen_wtm.kv', '.'), 
-                    ('config.ini', '.'), ('./assets/images/*.png', 'images'), ('./assets/images/*.jpg', 'images'),],
-=======
              datas=[('main.kv', '.'), ('screen_home.kv', '.'), ('screen_login.kv', '.'), ('screen_main.kv', '.'), 
                      ('screen_hlm.kv', '.'), ('screen_slm.kv', '.'), ('screen_wtm.kv', '.'),
                      ('config.ini', '.'), ('./assets/images/*.png', 'images'), ('./assets/images/*.jpg', 'images'),],
->>>>>>> 460d7124479d7a0eb5e9b1e6f6170cfc8a7ea5dd
              hiddenimports=[],
              hookspath=[kivymd_hooks_path],
              runtime_hooks=[],
@@ -32,11 +26,7 @@ exe = EXE(pyz,
           a.zipfiles,
           a.datas,
           *[Tree(p) for p in (sdl2.dep_bins + glew.dep_bins)],
-<<<<<<< HEAD
-          name='TRB-VIIMS-HeadSoundWindowMeterApp-Pandeglang',
-=======
           name='TRB-VIIMS-LampSoundWindowMeterApp-Sorong',
->>>>>>> 460d7124479d7a0eb5e9b1e6f6170cfc8a7ea5dd
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
@@ -44,8 +34,4 @@ exe = EXE(pyz,
           upx_exclude=[],
           runtime_tmpdir=None,
           console=True,
-<<<<<<< HEAD
-          icon='./assets/images/logo-trb.ico' )
-=======
           icon='./assets/images/logo-hlslwt-app.ico' )
->>>>>>> 460d7124479d7a0eb5e9b1e6f6170cfc8a7ea5dd

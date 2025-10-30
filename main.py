@@ -430,7 +430,7 @@ class ScreenMain(MDScreen):
             screen_hlm = self.screen_manager.get_screen('screen_hlm')
             screen_slm = self.screen_manager.get_screen('screen_slm')
             screen_wtm = self.screen_manager.get_screen('screen_wtm')
-            screen_Calibration = self.screen_manager.get_screen('screen_Calibration')
+            screen_calibration = self.screen_manager.get_screen('screen_calibration')
 
             self.ids.lb_time.text = str(time.strftime("%H:%M:%S", time.localtime()))
             self.ids.lb_date.text = str(time.strftime("%d/%m/%Y", time.localtime()))
@@ -444,8 +444,8 @@ class ScreenMain(MDScreen):
             screen_slm.ids.lb_date.text = str(time.strftime("%d/%m/%Y", time.localtime()))
             screen_wtm.ids.lb_time.text = str(time.strftime("%H:%M:%S", time.localtime()))
             screen_wtm.ids.lb_date.text = str(time.strftime("%d/%m/%Y", time.localtime()))
-            screen_Calibration.ids.lb_time.text = str(time.strftime("%H:%M:%S", time.localtime()))
-            screen_Calibration.ids.lb_date.text = str(time.strftime("%d/%m/%Y", time.localtime()))
+            screen_calibration.ids.lb_time.text = str(time.strftime("%H:%M:%S", time.localtime()))
+            screen_calibration.ids.lb_date.text = str(time.strftime("%d/%m/%Y", time.localtime()))
 
             self.ids.lb_dash_pendaftaran.text = str(dt_dash_pendaftaran)
             self.ids.lb_dash_belum_uji.text = str(dt_dash_belum_uji)
@@ -491,8 +491,8 @@ class ScreenMain(MDScreen):
                 screen_slm.ids.lb_comm.text = 'WTM Tidak Terhubung'
                 screen_wtm.ids.lb_comm.color = colors['Red']['A200']
                 screen_wtm.ids.lb_comm.text = 'WTM Tidak Terhubung'
-                screen_Calibration.ids.lb_comm.color = colors['Red']['A200']
-                screen_Calibration.ids.lb_comm.text = 'WTM Tidak Terhubung'                
+                screen_calibration.ids.lb_comm.color = colors['Red']['A200']
+                screen_calibration.ids.lb_comm.text = 'WTM Tidak Terhubung'                
             else:
                 self.ids.lb_comm.color = colors['Blue']['200']
                 self.ids.lb_comm.text = 'WTM Terhubung'
@@ -506,8 +506,8 @@ class ScreenMain(MDScreen):
                 screen_slm.ids.lb_comm.text = 'WTM Terhubung'
                 screen_wtm.ids.lb_comm.color = colors['Blue']['200']
                 screen_wtm.ids.lb_comm.text = 'WTM Terhubung'
-                screen_Calibration.ids.lb_comm.color = colors['Blue']['200']
-                screen_Calibration.ids.lb_comm.text = 'WTM Terhubung'
+                screen_calibration.ids.lb_comm.color = colors['Blue']['200']
+                screen_calibration.ids.lb_comm.text = 'WTM Terhubung'
 
             if(count_starting <= 0):
                 screen_slm.ids.lb_test_subtitle.text = "HASIL PENGUKURAN"
@@ -573,7 +573,7 @@ class ScreenMain(MDScreen):
             screen_menu.ids.lb_operator.text = f'Login Sebagai: {dt_user}' if dt_user != '' else 'Silahkan Login'
             screen_slm.ids.lb_operator.text = f'Login Sebagai: {dt_user}' if dt_user != '' else 'Silahkan Login'
             screen_wtm.ids.lb_operator.text = f'Login Sebagai: {dt_user}' if dt_user != '' else 'Silahkan Login'
-            screen_Calibration.ids.lb_operator.text = f'Login Sebagai: {dt_user}' if dt_user != '' else 'Silahkan Login'
+            screen_calibration.ids.lb_operator.text = f'Login Sebagai: {dt_user}' if dt_user != '' else 'Silahkan Login'
 
         except Exception as e:
             toast_msg = f'Error Update Display: {e}'
