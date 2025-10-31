@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "VIIMS - Head Lamp, Sound Level & Window Tint Meter Application"
-#define MyAppVersion "2.2.251030"
+#define MyAppVersion "2.3.251031"
 #define MyAppPublisher "PT. Tiga Ratu Berkarya"
 #define MyAppExeName "TRB-VIIMS-LampSoundWindowMeterApp-Sorong.exe"
 #define MyAppAssocName "VIIMS - Head Lamp, Sound Level & Window Tint Meter Application Files"

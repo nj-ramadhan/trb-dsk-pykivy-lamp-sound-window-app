@@ -1,12 +1,6 @@
-from attr import s
-import serial
-from serial.tools import list_ports
-import cv2
+from kivy.config import Config
+Config.set('kivy', 'keyboard_mode', 'systemanddock')
 
-import os, sys, time
-import ssl
-import datetime
-from kivy.graphics.texture import Texture
 if getattr(sys, 'frozen', False):
     application_path = os.path.dirname(sys.executable)
     running_mode = 'Frozen/executable'
@@ -22,9 +16,6 @@ else:
 logger_name = f'app.log'
 logger_dir = os.path.join(application_path, "logs")
 
-from kivy.config import Config
-Config.set('kivy', 'keyboard_mode', 'system')
-
 from kivy.logger import Logger
 from kivy.clock import Clock
 from kivy.lang import Builder
@@ -36,6 +27,7 @@ from kivymd.uix.screen import MDScreen
 from kivymd.uix.label import MDLabel
 from kivymd.uix.card import MDCard
 from kivymd.uix.textfield import MDTextField
+from kivy.graphics.texture import Texture
 from kivy.metrics import dp
 from kivymd.toast import toast
 from kivymd.app import MDApp
@@ -48,7 +40,14 @@ from kivymd.uix.datatables import MDDataTable
 import pyaudio, audioop
 from math import log10
 import serial.tools.list_ports as ports, serial
+from attr import s
+import serial
+from serial.tools import list_ports
+import cv2
 
+import os, sys, time
+import ssl
+import datetime
 
 
 colors = {
