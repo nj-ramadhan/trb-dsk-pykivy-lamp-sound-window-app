@@ -1,3 +1,4 @@
+import os, sys, time
 from kivy.config import Config
 Config.set('kivy', 'keyboard_mode', 'systemanddock')
 
@@ -45,7 +46,7 @@ import serial
 from serial.tools import list_ports
 import cv2
 
-import os, sys, time
+
 import ssl
 import datetime
 
@@ -156,7 +157,8 @@ RATE = 44100
 CHUNK = 1024
 RECORD_SECONDS = 0.8
 WIDTH = 2
-
+dt_id_user = 1
+dt_foto_user = ""
 db_slm_value = np.array([0.0])
 dt_slm_value = 0
 dt_slm_flag = 0
@@ -297,6 +299,7 @@ class ScreenLogin(MDScreen):
                 Logger.info(f"{self.name}: {toast_msg}")  
                 dt_id_user = myresult[0]
                 dt_user = myresult[1]
+                dt_foto_user = myresult[4]
                 
                 # PERBAIKAN UTAMA DI SINI
                 dt_hlm_user = dt_id_user
@@ -955,6 +958,10 @@ class ScreenHLM(MDScreen):
 
         try:
             config.read(config_full_path)
+            self.SEARCH_ROI_WIDTH = config.getint('headlamp_settings', 'search_roi_width', fallback=350)
+            self.SEARCH_ROI_HEIGHT = config.getint('headlamp_settings', 'search_roi_height', fallback=200)
+            self.AVG_ROI_SIZE = config.getint('headlamp_settings', 'avg_roi_size', fallback=50)
+            self.CAMERA_ID = config.getint('headlamp_settings', 'camera_id', fallback=0)
             self.TEST_DISTANCE_METERS = config.getfloat('headlamp_settings', 'test_distance_meters')
             self.CAM_WIDTH = config.getint('headlamp_settings', 'camera_width')
             self.CAM_HEIGHT = config.getint('headlamp_settings', 'camera_height')
@@ -979,6 +986,9 @@ class ScreenHLM(MDScreen):
             self.MAX_DEVIATION_RIGHT_DEG, self.MAX_DEVIATION_LEFT_DEG = 0.57, 1.15
             self.MAX_VERTICAL_DEVIATION_PERCENT = 1.3
             self.LUX_TO_CANDELA_FACTOR = self.TEST_DISTANCE_METERS ** 2
+            self.SEARCH_ROI_WIDTH, self.SEARCH_ROI_HEIGHT = 350, 200
+            self.AVG_ROI_SIZE = 50
+            self.CAMERA_ID = 0 
 
         Clock.schedule_once(self.delayed_init, 1)
 
@@ -1015,11 +1025,16 @@ class ScreenHLM(MDScreen):
             config.read(config_full_path)
             self.INTENSITY_SLOPE = config.getfloat('camera_calibration', 'intensity_slope')
             self.INTENSITY_INTERCEPT = config.getfloat('camera_calibration', 'intensity_intercept')
+            # TAMBAHKAN INI KARENA DIPAKAI DI start_camera:
             self.CAMERA_EXPOSURE = config.getfloat('camera_calibration', 'exposure', fallback=-4)
-        except Exception:
+            self.CAMERA_ID = config.getint('headlamp_settings', 'camera_id', fallback=0) # Ambil CAMERA_ID dari config
+        except Exception as e:
+            Logger.error(f"{self.name}: Gagal memuat config kamera - {e}")
             self.INTENSITY_SLOPE, self.INTENSITY_INTERCEPT, self.CAMERA_EXPOSURE = 1.0, 0.0, -4
+            self.CAMERA_ID = 0
+            
         try:
-            self.ids.lb_no_antrian.text = str(dt_no_antrian)
+            self.ids.lb_no_antrian.text = str(dt_no_antrian) # Catatan: Program 2 menggunakan dt_no_antri
             self.ids.lb_no_pol.text = str(dt_no_pol)
             self.ids.lb_no_uji.text = str(dt_no_uji)
         except Exception as e:
@@ -1152,7 +1167,7 @@ class ScreenHLM(MDScreen):
         Clock.schedule_once(lambda dt: setattr(self.ids.lb_countdown, 'text', ''), 1)
 
     def start_camera(self):
-        self.capture = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+        self.capture = cv2.VideoCapture(self.CAMERA_ID, cv2.CAP_DSHOW)
         if not self.capture.isOpened(): toast("Error: Tidak dapat membuka kamera."); self.capture = None; return
         self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.CAM_WIDTH)
         self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.CAM_HEIGHT)
@@ -1185,24 +1200,52 @@ class ScreenHLM(MDScreen):
     def analyze_frame(self, frame):
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         display_frame = frame
-        (_minVal, _maxVal, _minLoc, maxLoc) = cv2.minMaxLoc(gray_frame)
-        beam_center_x, beam_center_y = maxLoc
-        roi_size = 50
-        roi_x, roi_y = max(0, beam_center_x - roi_size // 2), max(0, beam_center_y - roi_size // 2)
-        roi_gray = gray_frame[roi_y : roi_y + roi_size, roi_x : roi_x + roi_size]
+
+        (frame_height, frame_width) = frame.shape[:2]
+        
+        search_roi_width = self.SEARCH_ROI_WIDTH  
+        search_roi_height = self.SEARCH_ROI_HEIGHT 
+        
+        roi_x = int((frame_width / 2) - (search_roi_width / 2))
+        roi_y = int((frame_height / 2) - (search_roi_height / 2))
+
+        roi_x = max(0, roi_x)
+        roi_y = max(0, roi_y)
+        search_roi_gray = gray_frame[roi_y : min(roi_y + search_roi_height, frame_height), 
+                                     roi_x : min(roi_x + search_roi_width, frame_width)]
+
+        if search_roi_gray.size == 0:
+            return frame 
+
+        (_minVal, _maxVal, _minLoc, maxLoc_relative) = cv2.minMaxLoc(search_roi_gray)
+        
+        beam_center_x = maxLoc_relative[0] + roi_x
+        beam_center_y = maxLoc_relative[1] + roi_y
+        
+        maxLoc = (beam_center_x, beam_center_y) 
+        
+
+        roi_size = self.AVG_ROI_SIZE
+        roi_x_avg, roi_y_avg = max(0, beam_center_x - roi_size // 2), max(0, beam_center_y - roi_size // 2)
+        
+        roi_gray = gray_frame[roi_y_avg : roi_y_avg + roi_size, roi_x_avg : roi_x_avg + roi_size]
+        
         if roi_gray.size > 0:
             mean_pixel_val = cv2.mean(roi_gray)[0]
             self.current_cd = self.convert_lux_to_candela(self.convert_pixel_to_lux(mean_pixel_val))
+            
             self.current_dev_h = (beam_center_x - self.REF_POINT_X) / self.PIXELS_PER_DEGREE_HORIZONTAL
             pixel_dev_y = self.REF_POINT_Y - beam_center_y
             dev_in_mm = pixel_dev_y * self.MM_PER_PIXEL_VERTICAL
             self.current_dev_v = (dev_in_mm / (self.TEST_DISTANCE_METERS * 1000)) * 100
+            
         cv2.circle(display_frame, (self.REF_POINT_X, self.REF_POINT_Y), 10, (255, 0, 0), 2)
         cv2.circle(display_frame, maxLoc, 15, (0, 255, 0), 2)
+        cv2.rectangle(display_frame, (roi_x, roi_y), (roi_x + search_roi_width, roi_y + search_roi_height), (0, 255, 0), 2)
         cv2.putText(display_frame, f"Daya: {self.current_cd:.0f} cd", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,255), 2)
+        
         return display_frame
 
-    # PERBAIKAN: Fungsi ini sekarang hanya menghitung dan mengembalikan flag
     def _calculate_pass_fail(self, cd, dev_h, dev_v, side):
         """Menghitung dan mengembalikan flag kelulusan terpisah untuk daya dan deviasi."""
         intensity_pass = cd >= self.MIN_CANDELA_THRESHOLD
@@ -1222,75 +1265,79 @@ class ScreenHLM(MDScreen):
                 1 if deviation_pass else 0, 
                 1 if overall_status else 0)
 
+# --- Program 1 (Di dalam ScreenHLM, Ganti seluruh isinya dengan Program 2) ---
     def exec_save(self):
-            if not dt_no_uji:
-                toast("Tidak ada data kendaraan yang dipilih.")
-                return
+        """Menyimpan hasil uji lampu JAUH saja, TERMASUK user yang login."""
+        if not dt_no_uji:
+            toast("Tidak ada data kendaraan yang dipilih.")
+            return
 
-            # Hanya ambil data dari lampu JAUH
-            jk = self.test_results['jauh_kanan']
-            jl = self.test_results['jauh_kiri']
+        # Hanya ambil data dari lampu JAUH
+        jk = self.test_results['jauh_kanan']
+        jl = self.test_results['jauh_kiri']
 
-            # Kumpulkan semua flag individu ke dalam satu list untuk pengecekan
-            all_flags = [
-                jk['intensity_flag'],
-                jk['deviation_flag'],
-                jl['intensity_flag'],
-                jl['deviation_flag']
-            ]
+        # Kumpulkan semua flag individu ke dalam satu list untuk pengecekan
+        all_flags = [
+            jk['intensity_flag'],
+            jk['deviation_flag'],
+            jl['intensity_flag'],
+            jl['deviation_flag']
+        ]
 
-            # Logika baru dengan 3 status: 2 (Belum Uji), 1 (Lulus), 0 (Tidak Lulus)
-            if 2 in all_flags:
-                final_hlm_flag = 2
-            elif all(flag == 1 for flag in all_flags):
-                final_hlm_flag = 1
-            else:
-                final_hlm_flag = 0
+        # Logika baru dengan 3 status: 2 (Belum Uji), 1 (Lulus), 0 (Tidak Lulus)
+        if 2 in all_flags:
+            final_hlm_flag = 2
+        elif all(flag == 1 for flag in all_flags):
+            final_hlm_flag = 1
+        else:
+            final_hlm_flag = 0
+        
+        # Gunakan 'dt_id_user' (dari global) dan waktu saat ini
+        hlm_post = str(time.strftime("%Y/%m/%d %H:%M:%S", time.localtime()))
+        hlm_user = dt_id_user # <-- PERBAIKAN: Gunakan dt_id_user (yang diset di login)
+
+        try:
+            screen_main = self.manager.get_screen('screen_main')
+            screen_main.exec_reload_database()
+            cursor = mydb.cursor()
+
+            # PERBAIKAN: Menggunakan kolom 'hlm_high_...' sesuai Program 2 dan skema yang dimaksud
+            query = f"""
+                UPDATE {TB_DATA} SET
+                    hlm_high_right_value = %s, hlm_high_right_flag = %s,
+                    hlm_diff_high_right_value = %s, hlm_diff_high_right_flag = %s,
+                    
+                    hlm_high_left_value = %s, hlm_high_left_flag = %s,
+                    hlm_diff_high_left_value = %s, hlm_diff_high_left_flag = %s,
+                    
+                    hlm_user = %s,
+                    hlm_post = %s,
+                    hlm_flag = %s
+                WHERE nouji = %s
+            """
             
-            # Tambahkan baris ini untuk mendapatkan waktu dan user saat ini
-            hlm_post = str(time.strftime("%Y/%m/%d %H:%M:%S", time.localtime()))
-            hlm_user = dt_hlm_user
+            # Values sekarang cocok dengan query
+            values = (
+                jk['cd'], jk['intensity_flag'], jk['dev_h'], jk['deviation_flag'],
+                jl['cd'], jl['intensity_flag'], jl['dev_h'], jl['deviation_flag'],
+                hlm_user,
+                hlm_post,
+                final_hlm_flag,
+                dt_no_uji
+            )
+            
+            cursor.execute(query, values)
+            mydb.commit()
+            
+            toast("Data Headlamp berhasil disimpan!")
+            Logger.info(f"Data headlamp (jauh) untuk nouji {dt_no_uji} berhasil disimpan oleh user ID: {hlm_user}.")
+            
+            # PERBAIKAN: Kembali ke main screen (daftar antrian)
+            self.manager.current = 'screen_menu' 
 
-            try:
-                screen_main = self.manager.get_screen('screen_main')
-                screen_main.exec_reload_database()
-                cursor = mydb.cursor()
-
-                # Query SQL diperbarui dengan hlm_user dan hlm_post
-                query = f"""
-                    UPDATE {TB_DATA} SET
-                        hlm_right_value = %s, hlm_right_flag = %s,
-                        hlm_diff_right_value = %s, hlm_diff_right_flag = %s,
-                        
-                        hlm_left_value = %s, hlm_left_flag = %s,
-                        hlm_diff_left_value = %s, hlm_diff_left_flag = %s,
-                        
-                        hlm_user = %s,
-                        hlm_post = %s,
-                        hlm_flag = %s
-                    WHERE nouji = %s
-                """
-                
-                # Values diperbarui dengan hlm_user dan hlm_post
-                values = (
-                    jk['cd'], jk['intensity_flag'], jk['dev_h'], jk['deviation_flag'],
-                    jl['cd'], jl['intensity_flag'], jl['dev_h'], jl['deviation_flag'],
-                    hlm_user,
-                    hlm_post,
-                    final_hlm_flag,
-                    dt_no_uji
-                )
-                
-                cursor.execute(query, values)
-                mydb.commit()
-                
-                toast("Data Headlamp berhasil disimpan!")
-                Logger.info(f"Data headlamp (jauh) untuk nouji {dt_no_uji} berhasil disimpan.")
-                self.manager.current = 'screen_menu'
-
-            except Exception as e:
-                toast("Gagal menyimpan data ke database.")
-                Logger.error(f"{self.name}: Error saat menyimpan: {e}")
+        except Exception as e:
+            toast("Gagal menyimpan data ke database.")
+            Logger.error(f"{self.name}: Error saat menyimpan: {e}")
 
     def exec_navigate_main(self):
         """Fungsi untuk kembali ke layar menu dari layar HLM."""
@@ -1492,7 +1539,7 @@ class ScreenCalibration(MDScreen):
         if self.camera_is_on:
             return
             
-        self.capture = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+        self.capture = cv2.VideoCapture(self.CAMERA_ID, cv2.CAP_DSHOW)
 
         if not self.capture.isOpened():
             toast("Error: Tidak dapat membuka kamera.")
@@ -1552,12 +1599,14 @@ class ScreenCalibration(MDScreen):
         """Memuat nilai slope dan intercept dari config.ini."""
         try:
             config.read(config_full_path)
+            self.CAMERA_ID = config.getint('headlamp_settings', 'camera_id', fallback=0)
             self.INTENSITY_SLOPE = float(config.get('camera_calibration', 'intensity_slope'))
             self.INTENSITY_INTERCEPT = float(config.get('camera_calibration', 'intensity_intercept'))
             toast("Konfigurasi kalibrasi dimuat.")
             Logger.info(f"{self.name}: Kalibrasi dimuat: Slope={self.INTENSITY_SLOPE}, Intercept={self.INTENSITY_INTERCEPT}")
         except (configparser.NoSectionError, configparser.NoOptionError):
             Logger.warning(f"{self.name}: Sesi [camera_calibration] tidak ditemukan. Menggunakan nilai default.")
+            self.CAMERA_ID = 0
             self.INTENSITY_SLOPE = 1.0
             self.INTENSITY_INTERCEPT = 0.0
 
@@ -1566,19 +1615,32 @@ class ScreenCalibration(MDScreen):
         return max(0, (self.INTENSITY_SLOPE * pixel_value) + self.INTENSITY_INTERCEPT)
 
     def analyze_frame_for_calibration(self, frame):
-        """Menganalisis frame di area tengah untuk mendapatkan nilai piksel dan visualisasi."""
+        """
+        Menganalisis frame di area tengah untuk mendapatkan nilai piksel rata-rata (ROI)
+        dan visualisasi selama proses kalibrasi. Ukuran ROI diambil dari config.ini.
+        """
         (frame_height, frame_width) = frame.shape[:2]
-        roi_size = 200  # Ukuran kotak ROI (200x200 piksel)
         
+        try:
+            config.read(config_full_path)
+            roi_size = config.getint('headlamp_settings', 'avg_roi_size', fallback=250)
+            if roi_size <= 0: roi_size = 250 # Pastikan ukurannya positif
+        except Exception:
+            roi_size = 250 
+
         roi_x = int((frame_width / 2) - (roi_size / 2))
         roi_y = int((frame_height / 2) - (roi_size / 2))
 
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        
         roi_gray = gray_frame[roi_y : roi_y + roi_size, roi_x : roi_x + roi_size]
 
-        mean_val = cv2.mean(roi_gray)[0] 
-        self.current_max_val = int(mean_val)
-
+        if roi_gray.size > 0:
+            mean_val = cv2.mean(roi_gray)[0] 
+            self.current_max_val = int(mean_val)
+        else:
+             self.current_max_val = 0
+             
         calibrated_lux = self.convert_pixel_to_lux(self.current_max_val)
 
         try:
@@ -1587,7 +1649,6 @@ class ScreenCalibration(MDScreen):
         except KeyError:
             pass # Mencegah error jika UI belum sepenuhnya dimuat
 
-        # Gambar kotak ROI untuk visualisasi
         cv2.rectangle(frame, (roi_x, roi_y), (roi_x + roi_size, roi_y + roi_size), (0, 255, 0), 2)
         return frame
 
